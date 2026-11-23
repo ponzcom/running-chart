@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏃‍♂️ 快樂跑步小達人 - 中年級體育課計圈</title>
+    <!-- 引入 Tailwind CSS 進行快速響應式排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Tone.js 產生清脆的計圈音效，無需外部音檔 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- 引入 Lucide Icons 圖示庫 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 引入圓潤可愛的中文字體 (Zen Maru Gothic 圓體 + Noto Sans TC) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+TC:wght@500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Zen Maru Gothic"', 'Fredoka', '"Noto Sans TC"', 'sans-serif'],
+                    },
+                    animation: {
+                        'pop': 'pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        'bounce-slow': 'bounce 2s infinite',
+                    },
+                    keyframes: {
+                        pop: {
+                            '0%': { transform: 'scale(1)' },
+                            '40%': { transform: 'scale(1.12) rotate(-2deg)' },
+                            '75%': { transform: 'scale(0.96) rotate(1deg)' },
+                            '100%': { transform: 'scale(1) rotate(0deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 防止平板快速點擊時觸發雙擊縮放或選取文字 */
+        body {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #FFFBEB;
+            background-image: radial-gradient(#FDE68A 1.5px, transparent 1.5px), radial-gradient(#BAE6FD 1.5px, #FFFBEB 1.5px);
+            background-size: 32px 32px;
+            background-position: 0 0, 16px 16px;
+        }
+        
+        /* 自訂可愛圓潤捲軸樣式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FEF3C7; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #F59E0B; 
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D97706; 
+        }
+
+        /* 點擊愛心/星星漣漪動畫 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-anim 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.65);
+            pointer-events: none;
+        }
+
+        @keyframes ripple-anim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* 糖果立體按鈕效果 */
+        .candy-card {
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.08);
+        }
+        .candy-card:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- 頂部導航與控制列 -->
+    <header class="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-30 border-b-4 border-amber-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                
+                <!-- 標題與可愛徽章 -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white p-2 rounded-2xl shadow-md shadow-amber-200 border-2 border-white flex items-center justify-center text-2xl">
+                        🏃‍♂️
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl sm:text-2xl font-black text-orange-600 tracking-wide">快樂跑步小達人</h1>
+                            <span class="hidden sm:inline-block bg-amber-100 text-amber-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-amber-300">
+                                ⭐ 活力運動會
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中央：課程計時器 & 目標設定 -->
+                <div class="flex items-center gap-2 sm:gap-3 bg-sky-50 px-3.5 py-1.5 rounded-2xl border-2 border-sky-200 shadow-inner">
+                    <!-- 計時器 -->
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-base">⏱️</span>
+                        <span id="timerDisplay" class="font-mono text-lg sm:text-xl font-black text-sky-700 w-20 text-center">00:00</span>
+                        <button id="timerToggleBtn" onclick="toggleTimer()" class="p-1.5 rounded-xl bg-emerald-400 text-white hover:bg-emerald-500 shadow-sm transition active:scale-95" title="開始/暫停計時">
+                            <i data-lucide="play" class="w-4 h-4" id="timerIcon"></i>
+                        </button>
+                        <button onclick="resetTimer()" class="p-1.5 rounded-xl bg-white text-slate-400 hover:text-slate-600 border border-slate-200 transition active:scale-95" title="重設計時">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <div class="h-6 w-0.5 bg-sky-200 rounded-full"></div>
+
+                    <!-- 目標圈數 -->
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-extrabold text-sky-700 hidden md:inline">🎯 目標:</span>
+                        <input type="number" id="targetLapsInput" value="5" min="1" max="100" onchange="updateTargetLaps(this.value)" 
+                               class="w-14 text-center font-black text-orange-600 bg-white border-2 border-amber-300 rounded-xl py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <span class="text-xs font-extrabold text-sky-700">圈</span>
+                    </div>
+
+                    <div class="h-6 w-0.5 bg-sky-200 rounded-full"></div>
+
+                    <!-- 📅 日期選擇與修改紀錄 -->
+                    <div class="flex items-center gap-1.5" title="點擊切換日期，可直接修改該日紀錄">
+                        <span class="text-base">📅</span>
+                        <input type="date" id="recordDateInput" onchange="changeRecordDate(this.value)"
+                               class="font-black text-indigo-700 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl px-2 py-0.5 text-xs sm:text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    </div>
+                </div>
+
+                <!-- 右側功能按鈕群 -->
+                <div class="flex items-center gap-2">
+                    <!-- 音效開關 -->
+                    <button id="soundToggleBtn" onclick="toggleSound()" class="p-2.5 rounded-2xl bg-amber-100 text-amber-700 border-2 border-amber-200 hover:bg-amber-200 transition active:scale-95" title="音效開關">
+                        <i data-lucide="volume-2" class="w-5 h-5" id="soundIcon"></i>
+                    </button>
+
+                    <!-- 分頁切換：計圈畫面 / 累計統計頁面 -->
+                    <div class="flex bg-amber-100/80 p-1 rounded-2xl border-2 border-amber-200">
+                        <button id="tabCounterBtn" onclick="switchView('counter')" class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white text-orange-600 font-black text-sm shadow-sm transition">
+                            <span>🏃‍♂️</span>
+                            <span class="hidden md:inline">計圈畫面</span>
+                        </button>
+                        <button id="tabStatsBtn" onclick="switchView('stats')" class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-amber-800 hover:bg-white/60 font-black text-sm transition">
+                            <span>📊</span>
+                            <span class="hidden md:inline">累計統計</span>
+                        </button>
+                    </div>
+
+                    <!-- ☁️ Firebase 雲端同步設定按鈕 -->
+                    <button id="cloudSyncBtn" onclick="openModal('cloudModal')" class="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-100 text-slate-600 border-2 border-slate-200 hover:bg-slate-200 font-black text-sm shadow-sm transition active:scale-95" title="設定 Firebase 雲端同步">
+                        <span id="cloudStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                        <span id="cloudBtnText" class="hidden sm:inline">☁️ 雲端同步</span>
+                    </button>
+
+                    <!-- 排行榜按鈕 -->
+                    <button onclick="openModal('leaderboardModal')" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-b from-amber-300 to-amber-400 text-amber-950 border-2 border-amber-500/30 hover:brightness-105 font-black text-sm shadow-sm transition active:scale-95">
+                        <span>🏆</span>
+                        <span class="hidden sm:inline">英雄榜</span>
+                    </button>
+
+                    <!-- 管理名單按鈕 -->
+                    <button onclick="openModal('manageModal')" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-500 text-white border-2 border-blue-600/20 hover:brightness-105 font-black text-sm shadow-sm transition active:scale-95">
+                        <span>📋</span>
+                        <span class="hidden sm:inline">班級名單</span>
+                    </button>
+
+                    <!-- 匯出/重設選單按鈕 -->
+                    <button onclick="openModal('actionsModal')" class="p-2.5 rounded-2xl bg-pink-500 text-white hover:bg-pink-600 shadow-sm transition active:scale-95" title="老師百寶箱">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 統計摘要條 (活潑天空藍) -->
+        <div class="bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 text-white text-xs sm:text-sm py-1.5 px-4 shadow-inner">
+            <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center gap-3 sm:gap-4 font-bold">
+                    <span class="bg-white/20 px-2.5 py-0.5 rounded-full text-amber-200">📅 <span id="bannerDateLabel">今日</span>紀錄</span>
+                    <span>🎒 全班：<strong id="totalStudentsCount" class="text-amber-200 text-base">0</strong> 人</span>
+                    <span>🔥 當日累積：<strong id="totalLapsCount" class="text-yellow-300 text-base">0</strong> 圈</span>
+                    <span>👑 當日過關：<strong id="completedStudentsCount" class="text-emerald-200 text-base">0</strong> 人</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sky-100 font-bold hidden sm:inline">排列順序：</span>
+                    <select id="sortSelect" onchange="changeSort(this.value)" class="bg-white/20 text-white font-bold border border-white/30 rounded-xl px-2.5 py-0.5 text-xs focus:outline-none">
+                        <option value="number" class="text-slate-800">🔢 依座號排隊</option>
+                        <option value="lapsDesc" class="text-slate-800">🚀 圈數多 → 少</option>
+                        <option value="lapsAsc" class="text-slate-800">🐢 圈數少 → 多</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 提示訊息 Toast (取代 alert) -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- 誤觸復原浮動條 (點擊後短暫顯示) -->
+    <div id="undoBanner" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 hidden">
+        <div class="bg-indigo-950/95 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-4 border-2 border-amber-400 backdrop-blur-sm">
+            <span id="undoText" class="text-sm font-bold">太棒了！王小明 +1 圈</span>
+            <button onclick="undoLastAction()" class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-black px-3.5 py-1.5 rounded-full flex items-center gap-1 transition active:scale-95 shadow">
+                <i data-lucide="undo-2" class="w-3.5 h-3.5"></i> 按錯扣回
+            </button>
+        </div>
+    </div>
+
+    <!-- 主內容區 1：學生點擊網格 (計圈畫面) -->
+    <main id="counterView" class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-4 lg:px-6 py-2.5 flex flex-col justify-center">
+        
+        <!-- 學生卡片網格容器：針對 32 人優化，寬螢幕與橫向平板預設為 8 欄 × 4 列 -->
+        <div id="studentsGrid" class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-2.5">
+            <!-- 卡片將由 JavaScript 動態生成 -->
+        </div>
+
+        <!-- 空狀態提示 -->
+        <div id="emptyState" class="hidden text-center py-16 bg-white/90 rounded-3xl border-4 border-dashed border-amber-300">
+            <div class="text-5xl mb-3 animate-bounce">🐰</div>
+            <h3 class="text-xl font-black text-slate-700 mb-1">還沒加入小選手名單喔！</h3>
+            <p class="text-sm font-bold text-slate-500 mb-4">請老師點擊上方「班級名單」把小朋友加進來吧！</p>
+            <button onclick="openModal('manageModal')" class="px-6 py-2.5 bg-amber-400 text-amber-950 font-black rounded-2xl hover:bg-amber-500 transition shadow-md">
+                ✨ 立即新增名單
+            </button>
+        </div>
+    </main>
+
+    <!-- 主內容區 2：個人累計與班級累計統計頁面 -->
+    <section id="statsView" class="hidden flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 space-y-6">
+        
+        <!-- 頂部返回與跑道設定列 -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-3xl border-4 border-amber-200 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">📊</span>
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-black text-orange-600">班級與個人跑步累計大本營</h2>
+                    <p class="text-xs sm:text-sm font-bold text-slate-500">記錄全班一起流汗累積的驚人成績！</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- 操場一圈公尺數設定 -->
+                <div class="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-2xl border-2 border-amber-200">
+                    <span class="text-xs font-extrabold text-amber-800">🏟️ 操場一圈：</span>
+                    <input type="number" id="lapMetersInput" value="200" min="10" max="2000" step="10" onchange="updateLapMeters(this.value)"
+                           class="w-16 text-center font-black text-orange-600 bg-white border-2 border-amber-300 rounded-xl py-0.5 text-sm focus:outline-none">
+                    <span class="text-xs font-extrabold text-amber-800">公尺</span>
+                </div>
+
+                <button onclick="switchView('counter')" class="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-black text-sm rounded-2xl shadow transition active:scale-95">
+                    ← 返回計圈
+                </button>
+            </div>
+        </div>
+
+        <!-- 一、班級累計總覽卡片群 -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-gradient-to-br from-orange-400 to-amber-500 text-white p-4 sm:p-5 rounded-3xl shadow-md border-4 border-white">
+                <div class="text-xs sm:text-sm font-extrabold opacity-90 flex items-center gap-1.5">🔥 跨日總累計圈數</div>
+                <div class="text-3xl sm:text-4xl font-black mt-1"><span id="statClassTotalLaps">0</span> <span class="text-base font-bold">圈</span></div>
+                <div class="text-xs font-bold mt-1 bg-white/20 inline-block px-2.5 py-0.5 rounded-full">共累計 <span id="statTotalDaysCount">1</span> 天紀錄</div>
+            </div>
+
+            <div class="bg-gradient-to-br from-sky-400 to-blue-500 text-white p-4 sm:p-5 rounded-3xl shadow-md border-4 border-white">
+                <div class="text-xs sm:text-sm font-extrabold opacity-90 flex items-center gap-1.5">🚀 全班總累計距離</div>
+                <div class="text-3xl sm:text-4xl font-black mt-1"><span id="statClassTotalKm">0.00</span> <span class="text-base font-bold">公里</span></div>
+                <div class="text-xs font-bold mt-1 bg-white/20 inline-block px-2.5 py-0.5 rounded-full">約 <span id="statClassTotalMeters">0</span> 公尺</div>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-4 sm:p-5 rounded-3xl shadow-md border-4 border-white">
+                <div class="text-xs sm:text-sm font-extrabold opacity-90 flex items-center gap-1.5">👑 目標達標人數</div>
+                <div class="text-3xl sm:text-4xl font-black mt-1"><span id="statClassCompleted">0</span> <span class="text-base font-bold">/ <span id="statClassStudentTotal">32</span> 人</span></div>
+                <div class="text-xs font-bold mt-1 bg-white/20 inline-block px-2.5 py-0.5 rounded-full">過關率 <span id="statClassPassRate">0</span>%</div>
+            </div>
+
+            <div class="bg-gradient-to-br from-pink-400 to-rose-500 text-white p-4 sm:p-5 rounded-3xl shadow-md border-4 border-white">
+                <div class="text-xs sm:text-sm font-extrabold opacity-90 flex items-center gap-1.5">⭐ 全班平均每人</div>
+                <div class="text-3xl sm:text-4xl font-black mt-1"><span id="statClassAvgLaps">0.0</span> <span class="text-base font-bold">圈</span></div>
+                <div class="text-xs font-bold mt-1 bg-white/20 inline-block px-2.5 py-0.5 rounded-full">平均 <span id="statClassAvgMeters">0</span> 公尺</div>
+            </div>
+        </div>
+
+        <!-- 趣味班級里程碑進度條 -->
+        <div class="bg-white p-5 rounded-3xl border-4 border-sky-200 shadow-sm">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+                <div class="font-black text-sky-800 text-base sm:text-lg flex items-center gap-2">
+                    <span>🗺️</span> 班級大冒險：一起從台北跑到高雄 (目標 350 公里)！
+                </div>
+                <span id="adventureMilestoneText" class="text-xs sm:text-sm font-black bg-sky-100 text-sky-700 px-3 py-1 rounded-full">
+                    準備出發囉！
+                </span>
+            </div>
+            <div class="w-full h-5 bg-sky-100 rounded-full overflow-hidden p-1 border border-sky-200">
+                <div id="adventureProgressBar" class="h-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-[11px] font-extrabold text-slate-400 mt-1.5 px-1">
+                <span>🚩 起點：台北 (0km)</span>
+                <span>桃園 (40km)</span>
+                <span>台中 (160km)</span>
+                <span>台南 (300km)</span>
+                <span>🏁 終點：高雄 (350km)</span>
+            </div>
+        </div>
+
+        <!-- 二、個人累計成績總表 -->
+        <div class="bg-white rounded-3xl border-4 border-amber-200 shadow-sm overflow-hidden">
+            <div class="p-4 sm:p-5 bg-amber-50 border-b-2 border-amber-200 flex flex-wrap justify-between items-center gap-3">
+                <h3 class="text-lg sm:text-xl font-black text-amber-900 flex items-center gap-2">
+                    <span>🏅</span> 個人累計成績一覽表
+                </h3>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-extrabold text-amber-800">排序方式：</span>
+                    <select id="statsSortSelect" onchange="renderStatsPage()" class="bg-white border-2 border-amber-300 text-amber-900 font-bold rounded-xl px-3 py-1 text-xs focus:outline-none">
+                        <option value="number">🔢 依座號順序</option>
+                        <option value="lapsDesc">🏆 累計圈數最多</option>
+                        <option value="lapsAsc">🌱 累計圈數最少</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-amber-100/60 text-amber-900 text-xs sm:text-sm font-black border-b-2 border-amber-200">
+                            <th class="py-3 px-4">小選手</th>
+                            <th class="py-3 px-3 text-center">跨日總累計</th>
+                            <th class="py-3 px-3 text-center">選定日(<span id="statsSelectedDateSpan">今日</span>)</th>
+                            <th class="py-3 px-3 text-center">總累計距離</th>
+                            <th class="py-3 px-4 hidden sm:table-cell">單日目標達成率</th>
+                            <th class="py-3 px-4 text-right">稱號 / 狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personalStatsTableBody" class="divide-y divide-amber-100 text-sm font-bold">
+                        <!-- 由 JavaScript 動態生成個人累計列 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 彈出視窗 (Modals) ==================== -->
+
+    <!-- 1. 管理名單 Modal -->
+    <div id="manageModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-sky-200 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-3 border-b-2 border-slate-100">
+                <h2 class="text-xl font-black text-sky-700 flex items-center gap-2">
+                    <span>📋</span> 管理班級小選手名單
+                </h2>
+                <button onclick="closeModal('manageModal')" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="py-4 overflow-y-auto flex-1 space-y-5">
+                <!-- 單筆新增 -->
+                <div>
+                    <label class="block text-sm font-extrabold text-slate-700 mb-1.5">新增一位小朋友</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="singleStudentInput" placeholder="輸入座號與姓名 (例: 01 王小明)" 
+                               onkeypress="if(event.key==='Enter') addSingleStudent()"
+                               class="flex-1 px-3.5 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-sky-400">
+                        <button onclick="addSingleStudent()" class="px-4 py-2 bg-sky-500 text-white font-black rounded-2xl hover:bg-sky-600 text-sm transition">
+                            加入
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 批次匯入 -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-sm font-extrabold text-slate-700">一次貼上全班名單 (一行一個名字)</label>
+                        <button onclick="loadSampleData()" class="text-xs text-sky-600 hover:underline font-extrabold">載入 32 人範例班級</button>
+                    </div>
+                    <textarea id="bulkStudentsInput" rows="5" placeholder="01 王小明&#10;02 陳小華&#10;03 林大文" 
+                              class="w-full p-3 border-2 border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-sky-400"></textarea>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="bulkAddStudents(false)" class="flex-1 py-2 bg-slate-800 text-white font-black rounded-2xl hover:bg-slate-700 text-sm transition">
+                            加在現有名單後面
+                        </button>
+                        <button onclick="bulkAddStudents(true)" class="flex-1 py-2 bg-rose-100 text-rose-600 border-2 border-rose-200 font-black rounded-2xl hover:bg-rose-200 text-sm transition">
+                            取代全部名單
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 現有名單快速刪除 -->
+                <div>
+                    <label class="block text-sm font-extrabold text-slate-700 mb-2">目前班級人數 (<span id="modalStudentCount">0</span> 人)</label>
+                    <div id="modalStudentList" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2.5 bg-amber-50/60 rounded-2xl border-2 border-amber-100">
+                        <!-- 動態生成小標籤 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t-2 border-slate-100 flex justify-end">
+                <button onclick="closeModal('manageModal')" class="px-6 py-2.5 bg-sky-500 text-white font-black rounded-2xl hover:bg-sky-600 text-sm shadow">
+                    完成設定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 排行榜 Modal -->
+    <div id="leaderboardModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-amber-300 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center pb-3 border-b-2 border-amber-100">
+                <h2 class="text-xl font-black text-amber-600 flex items-center gap-2">
+                    <span>🏆</span> 跑步小英雄排行榜
+                </h2>
+                <button onclick="closeModal('leaderboardModal')" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div id="leaderboardList" class="py-4 overflow-y-auto flex-1 space-y-2.5">
+                <!-- 動態生成排行榜 -->
+            </div>
+
+            <div class="pt-3 border-t-2 border-amber-100 flex justify-between items-center">
+                <span class="text-xs font-extrabold text-slate-500">🎯 今日過關目標：<strong id="lbTargetLaps" class="text-orange-600">5</strong> 圈</span>
+                <button onclick="closeModal('leaderboardModal')" class="px-6 py-2 bg-amber-400 text-amber-950 font-black rounded-2xl hover:bg-amber-500 text-sm">
+                    太棒了！
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 更多操作 (匯出與重設) Modal -->
+    <div id="actionsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-pink-200">
+            <div class="flex justify-between items-center pb-3 border-b-2 border-pink-100">
+                <h2 class="text-xl font-black text-pink-600 flex items-center gap-2">
+                    <span>🎒</span> 老師的成績百寶箱
+                </h2>
+                <button onclick="closeModal('actionsModal')" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="py-5 space-y-3">
+                <button onclick="exportCSV()" class="w-full flex items-center justify-between p-4 rounded-2xl bg-emerald-50 text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-100 transition">
+                    <div class="flex items-center gap-3 text-left">
+                        <div class="p-2.5 bg-emerald-500 text-white rounded-2xl text-xl">
+                            📥
+                        </div>
+                        <div>
+                            <div class="font-black">下載 Excel 成績單 (CSV)</div>
+                            <div class="text-xs font-bold text-emerald-600">保存全班今天的跑步圈數與時間</div>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+
+                <!-- 匯入 CSV 紀錄按鈕 -->
+                <button onclick="triggerImportCSV()" class="w-full flex items-center justify-between p-4 rounded-2xl bg-indigo-50 text-indigo-800 border-2 border-indigo-200 hover:bg-indigo-100 transition">
+                    <div class="flex items-center gap-3 text-left">
+                        <div class="p-2.5 bg-indigo-500 text-white rounded-2xl text-xl">
+                            📂
+                        </div>
+                        <div>
+                            <div class="font-black">匯入之前的成績紀錄</div>
+                            <div class="text-xs font-bold text-indigo-600">讀取上次下載的 CSV，繼續累積圈數</div>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleImportCSV(event)">
+
+                <button onclick="copySummaryText()" class="w-full flex items-center justify-between p-4 rounded-2xl bg-sky-50 text-sky-800 border-2 border-sky-200 hover:bg-sky-100 transition">
+                    <div class="flex items-center gap-3 text-left">
+                        <div class="p-2.5 bg-sky-500 text-white rounded-2xl text-xl">
+                            📋
+                        </div>
+                        <div>
+                            <div class="font-black">複製成績貼到班級群組</div>
+                            <div class="text-xs font-bold text-sky-600">產生可愛表情符號的成績清單</div>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+
+                <div class="pt-3 border-t-2 border-slate-100">
+                    <div id="resetConfirmArea">
+                        <button onclick="showResetConfirm()" class="w-full flex items-center justify-between p-4 rounded-2xl bg-rose-50 text-rose-700 border-2 border-rose-200 hover:bg-rose-100 transition">
+                            <div class="flex items-center gap-3 text-left">
+                                <div class="p-2.5 bg-rose-500 text-white rounded-2xl text-xl">
+                                    🔄
+                                </div>
+                                <div>
+                                    <div class="font-black">全部圈數重新歸零</div>
+                                    <div class="text-xs font-bold text-rose-600">保留小朋友名字，圈數全部變回 0</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    <!-- 二次確認區塊 (不使用 window.confirm) -->
+                    <div id="resetConfirmBox" class="hidden p-4 rounded-2xl bg-rose-500 text-white text-center space-y-3">
+                        <p class="font-black text-sm">確定要把全班的圈數都歸零重新開始嗎？</p>
+                        <div class="flex gap-2 justify-center">
+                            <button onclick="hideResetConfirm()" class="px-4 py-1.5 bg-rose-700 hover:bg-rose-800 rounded-xl text-xs font-black">先不要</button>
+                            <button onclick="resetAllLaps()" class="px-4 py-1.5 bg-white text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-black">確定歸零</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Firebase 雲端同步設定 Modal -->
+    <div id="cloudModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-indigo-200 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-3 border-b-2 border-indigo-100">
+                <h2 class="text-xl font-black text-indigo-700 flex items-center gap-2">
+                    <span>☁️</span> Firebase 雲端即時同步設定
+                </h2>
+                <button onclick="closeModal('cloudModal')" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="py-4 overflow-y-auto flex-1 space-y-4">
+                <!-- 目前連線狀態卡片 -->
+                <div id="cloudStatusBanner" class="p-3.5 rounded-2xl bg-slate-100 border-2 border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span id="cloudModalBadge" class="text-xl">🔌</span>
+                        <div>
+                            <div id="cloudModalStatusTitle" class="font-black text-sm text-slate-700">目前為「單機離線模式」</div>
+                            <div id="cloudModalStatusDesc" class="text-xs font-bold text-slate-500">連線後可讓多台平板與大螢幕即時同步圈數</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 班級同步代碼 -->
+                <div>
+                    <label class="block text-sm font-extrabold text-slate-700 mb-1">1. 設定班級同步代碼 (多台平板請輸入相同代碼)</label>
+                    <input type="text" id="cloudClassCodeInput" value="class_301" placeholder="例: class_301 或 grade3_run"
+                           class="w-full px-3.5 py-2 border-2 border-indigo-200 rounded-2xl text-sm font-black text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                </div>
+
+                <!-- Firebase Config 貼上區 -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm font-extrabold text-slate-700">2. 貼上您的 Firebase Config 設定</label>
+                        <span class="text-[11px] font-bold text-indigo-600">支援直接貼整段 JS 物件或 JSON</span>
+                    </div>
+                    <textarea id="firebaseConfigInput" rows="7" placeholder='直接貼上您從 Firebase 專案設定複製的內容，例如：
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "your-app.firebaseapp.com",
+  projectId: "your-app",
+  storageBucket: "your-app.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+};' 
+                              class="w-full p-3 border-2 border-slate-200 rounded-2xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+                </div>
+
+                <!-- 安全性規則小提醒 -->
+                <div class="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                    <div class="font-black">💡 老師小提醒：</div>
+                    <p class="font-bold leading-relaxed">請確認您的 Firebase 專案已開啟 <strong>Firestore Database</strong>，並在 Firestore 的「規則 (Rules)」中允許讀寫（例如測試模式），各台平板即可直接同步！</p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t-2 border-indigo-100 flex flex-wrap justify-between items-center gap-2">
+                <button id="disconnectCloudBtn" onclick="disconnectFirebase()" class="hidden px-4 py-2 bg-rose-100 text-rose-600 hover:bg-rose-200 font-black rounded-2xl text-xs transition">
+                    斷開雲端連線
+                </button>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="closeModal('cloudModal')" class="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 font-black rounded-2xl text-sm">
+                        取消
+                    </button>
+                    <button onclick="connectUserFirebase()" class="px-5 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-black rounded-2xl hover:brightness-105 text-sm shadow">
+                        🚀 連線並同步
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 動態載入 Firebase SDK 模組 (v11.6.1) 供使用者自訂專案連線
+        import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.FirebaseSDK = {
+            initializeApp, getApps, deleteApp,
+            getAuth, signInAnonymously, signInWithCustomToken,
+            getFirestore, doc, setDoc, onSnapshot
+        };
+    </script>
+
+    <script>
+        // ==================== Firebase 雲端即時同步引擎 ====================
+        let fbApp = null;
+        let fbDb = null;
+        let fbAuth = null;
+        let fbUnsubscribe = null;
+        let isCloudConnected = false;
+        let cloudClassCode = 'class_301';
+        let isApplyingRemoteUpdate = false; // 避免收到雲端更新時重複觸發寫回無窮迴圈
+
+        // 智慧解析使用者貼上的 firebaseConfig (支援 JS 物件格式或純 JSON)
+        function parseFirebaseConfigInput(rawText) {
+            if (!rawText || !rawText.trim()) throw new Error("請貼上 Firebase 設定內容");
+            let text = rawText.trim();
+            // 擷取第一個 { 到最後一個 } 之間的內容
+            const firstBrace = text.indexOf('{');
+            const lastBrace = text.lastIndexOf('}');
+            if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+                throw new Error("找不到大括號 { ... } 設定區塊");
+            }
+            let objBody = text.slice(firstBrace, lastBrace + 1);
+            // 嘗試直接 JSON.parse
+            try {
+                return JSON.parse(objBody);
+            } catch (e) {
+                // 若為未加雙引號的 JS 物件屬性名稱，轉換為標準 JSON 格式
+                const jsonified = objBody
+                    .replace(/\/\/.*$/gm, '') // 移除單行註解
+                    .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行註解
+                    .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":') // 屬性名稱加上雙引號
+                    .replace(/'/g, '"') // 單引號轉雙引號
+                    .replace(/,\s*}/g, '}'); // 移除尾隨逗號
+                return JSON.parse(jsonified);
+            }
+        }
+
+        async function connectUserFirebase() {
+            if (!window.FirebaseSDK) {
+                showToast("Firebase 模組載入中，請稍候 1 秒再試");
+                return;
+            }
+            const rawConfig = document.getElementById('firebaseConfigInput').value;
+            const classCodeInput = document.getElementById('cloudClassCodeInput').value.trim();
+            if (!classCodeInput) {
+                showToast("請輸入班級同步代碼！");
+                return;
+            }
+
+            let config;
+            try {
+                config = parseFirebaseConfigInput(rawConfig);
+                if (!config.projectId || !config.apiKey) {
+                    throw new Error("缺少 projectId 或 apiKey");
+                }
+            } catch (err) {
+                showToast(`設定格式解析失敗：${err.message}`);
+                return;
+            }
+
+            try {
+                showToast("⏳ 正在連線至您的 Firebase 雲端...");
+                const { initializeApp, getApps, deleteApp, getAuth, signInAnonymously, getFirestore, doc, onSnapshot } = window.FirebaseSDK;
+
+                // 若先前已有連線，先清除舊監聽與 App 實例
+                if (fbUnsubscribe) {
+                    fbUnsubscribe();
+                    fbUnsubscribe = null;
+                }
+                const existingApps = getApps();
+                for (const app of existingApps) {
+                    await deleteApp(app);
+                }
+
+                fbApp = initializeApp(config);
+                fbDb = getFirestore(fbApp);
+                fbAuth = getAuth(fbApp);
+
+                // 嘗試匿名驗證（若專案未開啟匿名驗證則略過，直接嘗試 Firestore 讀寫）
+                try {
+                    await signInAnonymously(fbAuth);
+                } catch (authErr) {
+                    console.warn("匿名登入略過（請確認 Firestore 規則允許讀寫）:", authErr.message);
+                }
+
+                cloudClassCode = classCodeInput.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'running-lap-app';
+                // 遵循標準路徑結構：/artifacts/{appId}/public/data/classes/{cloudClassCode}
+                const docRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'classes', cloudClassCode);
+
+                let isFirstSnapshot = true;
+
+                fbUnsubscribe = onSnapshot(docRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.data();
+                        isApplyingRemoteUpdate = true;
+
+                        if (Array.isArray(data.students) && data.students.length > 0) {
+                            students = data.students;
+                            nextId = students.reduce((max, s) => Math.max(max, s.id), 0) + 1;
+                        }
+                        if (data.dailyRecords && typeof data.dailyRecords === 'object') {
+                            dailyRecords = data.dailyRecords;
+                        }
+                        if (typeof data.targetLaps === 'number') {
+                            targetLaps = data.targetLaps;
+                            document.getElementById('targetLapsInput').value = targetLaps;
+                        }
+                        if (typeof data.lapMeters === 'number') {
+                            lapMeters = data.lapMeters;
+                            const lmInput = document.getElementById('lapMetersInput');
+                            if (lmInput) lmInput.value = lapMeters;
+                        }
+
+                        // 依目前畫面選定的日期載入對應圈數
+                        const dateData = dailyRecords[currentDate] || {};
+                        students.forEach(s => {
+                            if (dateData[s.id]) {
+                                s.laps = dateData[s.id].laps || 0;
+                                s.lastLapTime = dateData[s.id].lastLapTime || null;
+                            } else {
+                                s.laps = 0;
+                                s.lastLapTime = null;
+                            }
+                        });
+
+                        renderStudents();
+                        updateSummary();
+                        if (currentView === 'stats') renderStatsPage();
+                        isApplyingRemoteUpdate = false;
+                    } else if (isFirstSnapshot) {
+                        // 雲端尚無此班級資料，將目前本機資料上傳初始化
+                        pushStateToCloud();
+                    }
+                    isFirstSnapshot = false;
+                }, (error) => {
+                    console.error("Firestore 同步錯誤:", error);
+                    showToast(`⚠️ 雲端同步權限或連線錯誤：${error.message}`);
+                    updateCloudUIState(false);
+                });
+
+                isCloudConnected = true;
+                updateCloudUIState(true);
+                closeModal('cloudModal');
+                showToast(`✅ 已成功連線至雲端 (班級代碼：${cloudClassCode})！`);
+            } catch (err) {
+                console.error("Firebase 初始化失敗:", err);
+                showToast(`❌ 連線失敗：${err.message}`);
+            }
+        }
+
+        // 將最新狀態寫入雲端 Firestore
+        async function pushStateToCloud() {
+            if (!isCloudConnected || !fbDb || isApplyingRemoteUpdate) return;
+            try {
+                const { doc, setDoc } = window.FirebaseSDK;
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'running-lap-app';
+                const docRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'classes', cloudClassCode);
+
+                // 清理學生基本資料（不含單日暫存欄位，確保跨日結構乾淨）
+                const cleanStudents = students.map(s => ({
+                    id: s.id,
+                    number: s.number,
+                    name: s.name
+                }));
+
+                await setDoc(docRef, {
+                    students: cleanStudents,
+                    dailyRecords: dailyRecords,
+                    targetLaps: targetLaps,
+                    lapMeters: lapMeters,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (err) {
+                console.error("寫入雲端失敗:", err);
+                showToast("⚠️ 雲端寫入失敗，請檢查網路或 Firestore 規則");
+            }
+        }
+
+        function disconnectFirebase() {
+            if (fbUnsubscribe) {
+                fbUnsubscribe();
+                fbUnsubscribe = null;
+            }
+            isCloudConnected = false;
+            updateCloudUIState(false);
+            showToast("已斷開雲端同步，切換回單機模式");
+        }
+
+        function updateCloudUIState(connected) {
+            const btn = document.getElementById('cloudSyncBtn');
+            const dot = document.getElementById('cloudStatusDot');
+            const btnText = document.getElementById('cloudBtnText');
+            const banner = document.getElementById('cloudStatusBanner');
+            const badge = document.getElementById('cloudModalBadge');
+            const title = document.getElementById('cloudModalStatusTitle');
+            const desc = document.getElementById('cloudModalStatusDesc');
+            const disconnectBtn = document.getElementById('disconnectCloudBtn');
+
+            if (connected) {
+                btn.className = "flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-emerald-100 text-emerald-800 border-2 border-emerald-300 hover:bg-emerald-200 font-black text-sm shadow-sm transition active:scale-95";
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                btnText.textContent = `☁️ 已同步 (${cloudClassCode})`;
+                
+                banner.className = "p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 flex items-center justify-between";
+                badge.textContent = "✅";
+                title.textContent = `已連線至雲端 (代碼：${cloudClassCode})`;
+                title.className = "font-black text-sm text-emerald-800";
+                desc.textContent = "所有平板與大螢幕現在都會即時同步圈數與名單！";
+                disconnectBtn.classList.remove('hidden');
+            } else {
+                btn.className = "flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-100 text-slate-600 border-2 border-slate-200 hover:bg-slate-200 font-black text-sm shadow-sm transition active:scale-95";
+                dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
+                btnText.textContent = "☁️ 雲端同步";
+
+                banner.className = "p-3.5 rounded-2xl bg-slate-100 border-2 border-slate-200 flex items-center justify-between";
+                badge.textContent = "🔌";
+                title.textContent = "目前為「單機離線模式」";
+                title.className = "font-black text-sm text-slate-700";
+                desc.textContent = "連線後可讓多台平板與大螢幕即時同步圈數";
+                disconnectBtn.classList.add('hidden');
+            }
+        }
+
+        // ==================== 可愛動物貼紙陣列 (依座號分配給每位小朋友) ====================
+        const cuteAnimals = [
+            "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼",
+            "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔",
+            "🐧", "🐦", "🐤", "🦆", "🦉", "🦄", "🐝", "🐞",
+            "🐢", "🦕", "🦖", "🐙", "🐬", "🐳", "🦭", "🦦"
+        ];
+
+        // 糖果粉彩主題色陣列 (依座號循環套用)
+        const pastelThemes = [
+            { border: "border-rose-200 hover:border-rose-400", badge: "bg-rose-100 text-rose-700", bar: "bg-rose-400" },
+            { border: "border-sky-200 hover:border-sky-400", badge: "bg-sky-100 text-sky-700", bar: "bg-sky-400" },
+            { border: "border-emerald-200 hover:border-emerald-400", badge: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-400" },
+            { border: "border-purple-200 hover:border-purple-400", badge: "bg-purple-100 text-purple-700", bar: "bg-purple-400" },
+            { border: "border-orange-200 hover:border-orange-400", badge: "bg-orange-100 text-orange-700", bar: "bg-orange-400" },
+            { border: "border-teal-200 hover:border-teal-400", badge: "bg-teal-100 text-teal-700", bar: "bg-teal-400" }
+        ];
+        // ==================== 應用程式狀態 (預設 32 人班級與多日期紀錄庫) ====================
+        function getTodayStr() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+        }
+
+        let currentDate = getTodayStr();
+        // 儲存各日期的紀錄：{ "2026-11-23": { studentId: { laps: 3, lastLapTime: "04:12" } } }
+        let dailyRecords = {};
+
+        let students = [
+            { id: 1, number: 1, name: "01 王小明", laps: 0, lastLapTime: null },
+            { id: 2, number: 2, name: "02 陳小華", laps: 0, lastLapTime: null },
+            { id: 3, number: 3, name: "03 林大文", laps: 0, lastLapTime: null },
+            { id: 4, number: 4, name: "04 張雅婷", laps: 0, lastLapTime: null },
+            { id: 5, number: 5, name: "05 李俊傑", laps: 0, lastLapTime: null },
+            { id: 6, number: 6, name: "06 黃怡君", laps: 0, lastLapTime: null },
+            { id: 7, number: 7, name: "07 吳冠宇", laps: 0, lastLapTime: null },
+            { id: 8, number: 8, name: "08 劉佳穎", laps: 0, lastLapTime: null },
+            { id: 9, number: 9, name: "09 蔡宗翰", laps: 0, lastLapTime: null },
+            { id: 10, number: 10, name: "10 許詩涵", laps: 0, lastLapTime: null },
+            { id: 11, number: 11, name: "11 楊承恩", laps: 0, lastLapTime: null },
+            { id: 12, number: 12, name: "12 鄭雅筑", laps: 0, lastLapTime: null },
+            { id: 13, number: 13, name: "13 謝宇軒", laps: 0, lastLapTime: null },
+            { id: 14, number: 14, name: "14 郭子涵", laps: 0, lastLapTime: null },
+            { id: 15, number: 15, name: "15 洪柏翰", laps: 0, lastLapTime: null },
+            { id: 16, number: 16, name: "16 曾郁婷", laps: 0, lastLapTime: null },
+            { id: 17, number: 17, name: "17 邱俊宏", laps: 0, lastLapTime: null },
+            { id: 18, number: 18, name: "18 廖心怡", laps: 0, lastLapTime: null },
+            { id: 19, number: 19, name: "19 徐偉哲", laps: 0, lastLapTime: null },
+            { id: 20, number: 20, name: "20 周品妍", laps: 0, lastLapTime: null },
+            { id: 21, number: 21, name: "21 葉冠廷", laps: 0, lastLapTime: null },
+            { id: 22, number: 22, name: "22 蘇家瑜", laps: 0, lastLapTime: null },
+            { id: 23, number: 23, name: "23 莊博翔", laps: 0, lastLapTime: null },
+            { id: 24, number: 24, name: "24 呂采倪", laps: 0, lastLapTime: null },
+            { id: 25, number: 25, name: "25 江宥辰", laps: 0, lastLapTime: null },
+            { id: 26, number: 26, name: "26 何思穎", laps: 0, lastLapTime: null },
+            { id: 27, number: 27, name: "27 羅翊愷", laps: 0, lastLapTime: null },
+            { id: 28, number: 28, name: "28 高語彤", laps: 0, lastLapTime: null },
+            { id: 29, number: 29, name: "29 蕭宇翔", laps: 0, lastLapTime: null },
+            { id: 30, number: 30, name: "30 潘芷晴", laps: 0, lastLapTime: null },
+            { id: 31, number: 31, name: "31 簡柏宇", laps: 0, lastLapTime: null },
+            { id: 32, number: 32, name: "32 鍾宜臻", laps: 0, lastLapTime: null }
+        ];
+
+        let targetLaps = 5;
+        let lapMeters = 200; // 預設操場一圈 200 公尺
+        let currentView = 'counter'; // 'counter' | 'stats'
+        let sortBy = 'number'; // 'number' | 'lapsDesc' | 'lapsAsc'
+        let soundEnabled = true;
+        let lastAction = null; // 記錄上一次加圈動作以供復原
+        let undoTimeout = null;
+        let nextId = 33;
+
+        // 同步目前畫面的 students 圈數到 dailyRecords[currentDate]
+        function saveCurrentDateRecords(syncToCloud = true) {
+            if (!dailyRecords[currentDate]) {
+                dailyRecords[currentDate] = {};
+            }
+            students.forEach(s => {
+                dailyRecords[currentDate][s.id] = {
+                    laps: s.laps,
+                    lastLapTime: s.lastLapTime
+                };
+            });
+            if (syncToCloud && isCloudConnected && !isApplyingRemoteUpdate) {
+                pushStateToCloud();
+            }
+        }
+
+        // 切換日期並載入該日紀錄（可直接點擊卡片修改）
+        function changeRecordDate(newDate) {
+            if (!newDate) return;
+            // 先保存原本日期的資料（不重複推送雲端）
+            saveCurrentDateRecords(false);
+
+            currentDate = newDate;
+            const dateData = dailyRecords[currentDate] || {};
+
+            students.forEach(s => {
+                if (dateData[s.id]) {
+                    s.laps = dateData[s.id].laps || 0;
+                    s.lastLapTime = dateData[s.id].lastLapTime || null;
+                } else {
+                    s.laps = 0;
+                    s.lastLapTime = null;
+                }
+            });
+
+            lastAction = null;
+            hideUndoBanner();
+            document.getElementById('bannerDateLabel').textContent = (currentDate === getTodayStr()) ? `今日 (${currentDate})` : currentDate;
+            renderStudents();
+            updateSummary();
+            if (currentView === 'stats') renderStatsPage();
+            showToast(`📅 已切換至 ${currentDate}，現在可直接點擊修改當天圈數！`);
+        }
+
+        // 取得某位學生跨越所有日期的總累計圈數
+        function getStudentCumulativeLaps(studentId) {
+            saveCurrentDateRecords(false);
+            let sum = 0;
+            Object.values(dailyRecords).forEach(dayMap => {
+                if (dayMap[studentId]) {
+                    sum += (dayMap[studentId].laps || 0);
+                }
+            });
+            return sum;
+        }
+
+        // 計時器變數
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        // ==================== 音效系統 (Tone.js) ====================
+        let synth = null;
+        function initAudio() {
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.05, release: 0.2 }
+                }).toDestination();
+                synth.volume.value = -6;
+            }
+        }
+
+        function playLapSound(isGoalReached = false) {
+            if (!soundEnabled) return;
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                initAudio();
+                if (!synth) return;
+
+                if (isGoalReached) {
+                    // 達成目標時的歡呼和弦音效
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("C5", "16n", now);
+                    synth.triggerAttackRelease("E5", "16n", now + 0.08);
+                    synth.triggerAttackRelease("G5", "16n", now + 0.16);
+                    synth.triggerAttackRelease("C6", "8n", now + 0.24);
+                } else {
+                    // 一般計圈清脆提示音
+                    synth.triggerAttackRelease("G5", "32n");
+                }
+            } catch (e) {
+                console.warn("Audio play failed:", e);
+            }
+        }
+
+        function playUndoSound() {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (synth) synth.triggerAttackRelease("C4", "16n");
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            const btn = document.getElementById('soundToggleBtn');
+            if (soundEnabled) {
+                icon.setAttribute('data-lucide', 'volume-2');
+                btn.classList.remove('text-slate-400', 'bg-slate-200');
+                btn.classList.add('text-slate-700', 'bg-slate-100');
+                showToast("音效已開啟");
+            } else {
+                icon.setAttribute('data-lucide', 'volume-x');
+                btn.classList.remove('text-slate-700', 'bg-slate-100');
+                btn.classList.add('text-slate-400', 'bg-slate-200');
+                showToast("音效已靜音");
+            }
+            lucide.createIcons();
+        }
+
+        // ==================== 計時器控制 ====================
+        function formatTime(sec) {
+            const mins = Math.floor(sec / 60).toString().padStart(2, '0');
+            const secs = (sec % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerToggleBtn');
+            const icon = document.getElementById('timerIcon');
+            
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                icon.setAttribute('data-lucide', 'play');
+                btn.classList.remove('bg-amber-100', 'text-amber-700');
+                btn.classList.add('bg-emerald-100', 'text-emerald-700');
+            } else {
+                timerInterval = setInterval(() => {
+                    timerSeconds++;
+                    document.getElementById('timerDisplay').textContent = formatTime(timerSeconds);
+                }, 1000);
+                isTimerRunning = true;
+                icon.setAttribute('data-lucide', 'pause');
+                btn.classList.remove('bg-emerald-100', 'text-emerald-700');
+                btn.classList.add('bg-amber-100', 'text-amber-700');
+            }
+            lucide.createIcons();
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timerSeconds = 0;
+            document.getElementById('timerDisplay').textContent = "00:00";
+            const btn = document.getElementById('timerToggleBtn');
+            const icon = document.getElementById('timerIcon');
+            icon.setAttribute('data-lucide', 'play');
+            btn.classList.remove('bg-amber-100', 'text-amber-700');
+            btn.classList.add('bg-emerald-100', 'text-emerald-700');
+            lucide.createIcons();
+        }
+
+        // ==================== 核心計圈邏輯 ====================
+        function addLap(id, event) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            // 產生點擊漣漪視覺效果
+            if (event) {
+                createRipple(event);
+            }
+
+            // 如果計時器還沒開始，第一次有人按名字時自動開始計時
+            if (!isTimerRunning && timerSeconds === 0) {
+                toggleTimer();
+            }
+
+            student.laps += 1;
+            student.lastLapTime = formatTime(timerSeconds);
+            saveCurrentDateRecords();
+
+            // 檢查是否剛達成目標圈數
+            const reachedGoalNow = (student.laps === targetLaps);
+            playLapSound(reachedGoalNow);
+
+            // 記錄最後操作供復原
+            lastAction = { id: student.id, name: student.name };
+            showUndoBanner(student.name, student.laps);
+
+            renderStudents(id);
+            updateSummary();
+            if (currentView === 'stats') renderStatsPage();
+        }
+
+        function subtractLap(id, event) {
+            if (event) event.stopPropagation(); // 阻止觸發外層卡片的 addLap
+            const student = students.find(s => s.id === id);
+            if (!student || student.laps <= 0) return;
+
+            student.laps -= 1;
+            saveCurrentDateRecords();
+            playUndoSound();
+            renderStudents();
+            updateSummary();
+            if (currentView === 'stats') renderStatsPage();
+            showToast(`已修改 ${student.name} (${currentDate}) 扣回 1 圈 (目前 ${student.laps} 圈)`);
+        }
+
+        function undoLastAction() {
+            if (!lastAction) return;
+            const student = students.find(s => s.id === lastAction.id);
+            if (student && student.laps > 0) {
+                student.laps -= 1;
+                saveCurrentDateRecords();
+                playUndoSound();
+                renderStudents();
+                updateSummary();
+                if (currentView === 'stats') renderStatsPage();
+                showToast(`已把 ${student.name} 的圈數復原囉！`);
+            }
+            hideUndoBanner();
+            lastAction = null;
+        }
+
+        function showUndoBanner(name, currentLaps) {
+            const banner = document.getElementById('undoBanner');
+            const text = document.getElementById('undoText');
+            text.innerHTML = `🎉 太棒了！<strong>${name}</strong> 跑到 <strong class="text-amber-300 text-base">${currentLaps}</strong> 圈囉！`;
+            banner.classList.remove('hidden');
+
+            if (undoTimeout) clearTimeout(undoTimeout);
+            undoTimeout = setTimeout(() => {
+                hideUndoBanner();
+            }, 4000);
+        }
+
+        function hideUndoBanner() {
+            document.getElementById('undoBanner').classList.add('hidden');
+        }
+
+        function createRipple(event) {
+            const card = event.currentTarget;
+            if (!card) return;
+            const circle = document.createElement("span");
+            const diameter = Math.max(card.clientWidth, card.clientHeight);
+            const radius = diameter / 2;
+            const rect = card.getBoundingClientRect();
+
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${event.clientX - rect.left - radius}px`;
+            circle.style.top = `${event.clientY - rect.top - radius}px`;
+            circle.classList.add("ripple");
+
+            const existingRipple = card.getElementsByClassName("ripple")[0];
+            if (existingRipple) {
+                existingRipple.remove();
+            }
+            card.appendChild(circle);
+        }
+
+        // ==================== 渲染與更新介面 ====================
+        function renderStudents(animatedId = null) {
+            const grid = document.getElementById('studentsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            // 複製陣列進行排序
+            let filtered = [...students];
+
+            // 排序
+            filtered.sort((a, b) => {
+                if (sortBy === 'lapsDesc') {
+                    return b.laps - a.laps || a.number - b.number;
+                } else if (sortBy === 'lapsAsc') {
+                    return a.laps - b.laps || a.number - b.number;
+                }
+                return a.number - b.number;
+            });
+
+            if (students.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            grid.innerHTML = filtered.map((student, idx) => {
+                const isGoalReached = student.laps >= targetLaps;
+                const progressPercent = Math.min(100, Math.round((student.laps / targetLaps) * 100));
+                const isAnimated = (student.id === animatedId);
+                
+                // 取得專屬小動物與糖果配色
+                const animalEmoji = cuteAnimals[(student.number - 1) % cuteAnimals.length];
+                const theme = pastelThemes[(student.number - 1) % pastelThemes.length];
+
+                // 根據達標狀態切換卡片外觀 (達標變身為超可愛金黃冠軍獎盃卡片)
+                const cardBg = isGoalReached 
+                    ? 'bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-400 text-amber-950 border-amber-500 shadow-lg shadow-amber-300/60' 
+                    : `bg-white text-slate-800 ${theme.border}`;
+
+                const lapBadgeColor = isGoalReached
+                    ? 'bg-white/80 text-orange-700 shadow-sm'
+                    : (student.laps > 0 ? theme.badge : 'bg-slate-100 text-slate-500');
+
+                const subTextColor = isGoalReached ? 'text-amber-900/80' : 'text-slate-400';
+
+                return `
+                    <div onclick="addLap(${student.id}, event)" 
+                         class="candy-card relative overflow-hidden cursor-pointer rounded-2xl border-2 p-2 sm:p-2.5 transition-all duration-150 flex flex-col justify-between min-h-[106px] sm:min-h-[114px] ${cardBg} ${isAnimated ? 'animate-pop' : ''}">
+                        
+                        <!-- 頂部：小動物頭像 + 達標皇冠/時間 -->
+                        <div class="flex justify-between items-center gap-1 min-h-[20px]">
+                            <div class="flex items-center gap-1">
+                                <span class="text-sm sm:text-base leading-none">${isGoalReached ? '🏆' : animalEmoji}</span>
+                                <span class="text-[10px] sm:text-[11px] font-extrabold truncate ${subTextColor}">
+                                    ${student.lastLapTime ? student.lastLapTime : '準備出發'}
+                                </span>
+                            </div>
+                            ${isGoalReached ? `
+                                <span class="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-sm shrink-0">
+                                    👑 過關
+                                </span>
+                            ` : ''}
+                        </div>
+
+                        <!-- 中央：學生姓名 -->
+                        <div class="my-1 text-center">
+                            <div class="text-sm sm:text-base font-black tracking-tight truncate leading-tight" title="${escapeHTML(student.name)}">
+                                ${escapeHTML(student.name)}
+                            </div>
+                        </div>
+
+                        <!-- 底部：大圈數顯示 + 減一圈微調鈕 -->
+                        <div>
+                            <div class="flex items-center justify-between gap-1">
+                                <div class="flex items-baseline gap-0.5 px-2 py-0.5 rounded-xl ${lapBadgeColor}">
+                                    <span class="text-lg sm:text-xl font-black leading-none">${student.laps}</span>
+                                    <span class="text-[11px] font-extrabold opacity-80">/${targetLaps}</span>
+                                </div>
+
+                                ${student.laps > 0 ? `
+                                    <button onclick="subtractLap(${student.id}, event)" 
+                                            title="減 1 圈"
+                                            class="w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center font-black text-xs transition shrink-0 ${isGoalReached ? 'bg-amber-950/15 hover:bg-amber-950/25 text-amber-950' : 'bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600'}">
+                                        -1
+                                    </button>
+                                ` : ''}
+                            </div>
+
+                            <!-- 可愛圓潤進度條 -->
+                            <div class="w-full h-1.5 rounded-full mt-1.5 overflow-hidden ${isGoalReached ? 'bg-white/50' : 'bg-slate-100'}">
+                                <div class="h-full rounded-full transition-all duration-300 ${isGoalReached ? 'bg-rose-500' : theme.bar}" 
+                                     style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function updateSummary() {
+            const totalStudents = students.length;
+            const totalLaps = students.reduce((sum, s) => sum + s.laps, 0);
+            const completed = students.filter(s => s.laps >= targetLaps).length;
+
+            document.getElementById('totalStudentsCount').textContent = totalStudents;
+            document.getElementById('totalLapsCount').textContent = totalLaps;
+            document.getElementById('completedStudentsCount').textContent = completed;
+        }
+
+        function updateTargetLaps(val) {
+            const num = parseInt(val);
+            if (!isNaN(num) && num >= 1) {
+                targetLaps = num;
+                renderStudents();
+                updateSummary();
+                if (currentView === 'stats') renderStatsPage();
+                if (isCloudConnected) pushStateToCloud();
+                showToast(`目標圈數已更新為 ${targetLaps} 圈`);
+            }
+        }
+
+        // ==================== 頁面分頁切換與累計統計頁面邏輯 ====================
+        function switchView(viewName) {
+            currentView = viewName;
+            const counterView = document.getElementById('counterView');
+            const statsView = document.getElementById('statsView');
+            const tabCounterBtn = document.getElementById('tabCounterBtn');
+            const tabStatsBtn = document.getElementById('tabStatsBtn');
+
+            if (viewName === 'stats') {
+                counterView.classList.add('hidden');
+                statsView.classList.remove('hidden');
+                
+                tabStatsBtn.classList.add('bg-white', 'text-orange-600', 'shadow-sm');
+                tabStatsBtn.classList.remove('text-amber-800', 'hover:bg-white/60');
+                
+                tabCounterBtn.classList.remove('bg-white', 'text-orange-600', 'shadow-sm');
+                tabCounterBtn.classList.add('text-amber-800', 'hover:bg-white/60');
+                
+                renderStatsPage();
+            } else {
+                statsView.classList.add('hidden');
+                counterView.classList.remove('hidden');
+                
+                tabCounterBtn.classList.add('bg-white', 'text-orange-600', 'shadow-sm');
+                tabCounterBtn.classList.remove('text-amber-800', 'hover:bg-white/60');
+                
+                tabStatsBtn.classList.remove('bg-white', 'text-orange-600', 'shadow-sm');
+                tabStatsBtn.classList.add('text-amber-800', 'hover:bg-white/60');
+            }
+        }
+
+        function updateLapMeters(val) {
+            const num = parseInt(val);
+            if (!isNaN(num) && num >= 10) {
+                lapMeters = num;
+                renderStatsPage();
+                if (isCloudConnected) pushStateToCloud();
+                showToast(`操場每圈距離已設為 ${lapMeters} 公尺`);
+            }
+        }
+
+        function renderStatsPage() {
+            saveCurrentDateRecords(false);
+            const totalStudents = students.length;
+            const recordedDates = Object.keys(dailyRecords).filter(d => {
+                const daySum = Object.values(dailyRecords[d]).reduce((acc, rec) => acc + (rec.laps || 0), 0);
+                return daySum > 0 || d === currentDate;
+            });
+
+            // 計算跨所有日期的全班總累計圈數
+            let grandTotalLaps = 0;
+            students.forEach(s => {
+                grandTotalLaps += getStudentCumulativeLaps(s.id);
+            });
+
+            const totalMeters = grandTotalLaps * lapMeters;
+            const totalKm = (totalMeters / 1000).toFixed(2);
+            const completedCount = students.filter(s => s.laps >= targetLaps).length;
+            const passRate = totalStudents > 0 ? Math.round((completedCount / totalStudents) * 100) : 0;
+            const avgLaps = totalStudents > 0 ? (grandTotalLaps / totalStudents).toFixed(1) : '0.0';
+            const avgMeters = totalStudents > 0 ? Math.round(totalMeters / totalStudents) : 0;
+
+            // 更新班級累計數據卡片
+            document.getElementById('statClassTotalLaps').textContent = grandTotalLaps;
+            document.getElementById('statTotalDaysCount').textContent = Math.max(1, recordedDates.length);
+            document.getElementById('statClassTotalKm').textContent = totalKm;
+            document.getElementById('statClassTotalMeters').textContent = totalMeters.toLocaleString();
+            document.getElementById('statClassCompleted').textContent = completedCount;
+            document.getElementById('statClassStudentTotal').textContent = totalStudents;
+            document.getElementById('statClassPassRate').textContent = passRate;
+            document.getElementById('statClassAvgLaps').textContent = avgLaps;
+            document.getElementById('statClassAvgMeters').textContent = avgMeters.toLocaleString();
+            document.getElementById('statsSelectedDateSpan').textContent = currentDate;
+
+            // 更新班級大冒險進度條 (目標 350 km 台北到高雄)
+            const targetKm = 350;
+            const adventurePercent = Math.min(100, Math.round((parseFloat(totalKm) / targetKm) * 100));
+            document.getElementById('adventureProgressBar').style.width = `${adventurePercent}%`;
+            
+            const kmNum = parseFloat(totalKm);
+            let milestoneMsg = `已前進 ${totalKm} 公里 (${adventurePercent}%)`;
+            if (kmNum === 0) milestoneMsg = "🚩 準備從台北出發囉！";
+            else if (kmNum >= 350) milestoneMsg = "🎉 恭喜全班成功抵達高雄啦！";
+            else if (kmNum >= 300) milestoneMsg = `🔥 已經跑到台南囉！(${totalKm} km)`;
+            else if (kmNum >= 160) milestoneMsg = `🚅 已經跑到台中囉！(${totalKm} km)`;
+            else if (kmNum >= 40) milestoneMsg = `✈️ 已經跑到桃園囉！(${totalKm} km)`;
+            document.getElementById('adventureMilestoneText').textContent = milestoneMsg;
+
+            // 渲染個人累計表格
+            const tbody = document.getElementById('personalStatsTableBody');
+            const statsSort = document.getElementById('statsSortSelect').value;
+            
+            const sortedStudents = [...students].sort((a, b) => {
+                const cumA = getStudentCumulativeLaps(a.id);
+                const cumB = getStudentCumulativeLaps(b.id);
+                if (statsSort === 'lapsDesc') return cumB - cumA || a.number - b.number;
+                if (statsSort === 'lapsAsc') return cumA - cumB || a.number - b.number;
+                return a.number - b.number;
+            });
+
+            if (sortedStudents.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">目前還沒有小選手名單喔！</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = sortedStudents.map(student => {
+                const animalEmoji = cuteAnimals[(student.number - 1) % cuteAnimals.length];
+                const cumulativeLaps = getStudentCumulativeLaps(student.id);
+                const personalMeters = cumulativeLaps * lapMeters;
+                const progressPct = Math.min(100, Math.round((student.laps / targetLaps) * 100));
+                const isDone = student.laps >= targetLaps;
+
+                // 根據個人累計圈數給予可愛榮譽稱號
+                let titleBadge = `<span class="bg-slate-100 text-slate-500 text-xs px-2.5 py-1 rounded-full">🌱 暖身準備中</span>`;
+                if (cumulativeLaps >= targetLaps * 2) {
+                    titleBadge = `<span class="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-sm">🔥 超級馬拉松王</span>`;
+                } else if (isDone || cumulativeLaps >= targetLaps) {
+                    titleBadge = `<span class="bg-amber-100 text-amber-800 border border-amber-300 text-xs font-black px-2.5 py-1 rounded-full">👑 達標小飛俠</span>`;
+                } else if (cumulativeLaps > 0) {
+                    titleBadge = `<span class="bg-sky-100 text-sky-700 text-xs font-extrabold px-2.5 py-1 rounded-full">🏃 努力衝刺中</span>`;
+                }
+
+                return `
+                    <tr class="hover:bg-amber-50/70 transition ${isDone ? 'bg-yellow-50/40' : ''}">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xl">${isDone ? '🏆' : animalEmoji}</span>
+                                <span class="font-black text-slate-800">${escapeHTML(student.name)}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="inline-block px-3 py-0.5 rounded-xl font-black text-base ${cumulativeLaps >= targetLaps ? 'bg-amber-400 text-amber-950' : 'bg-sky-100 text-sky-800'}">
+                                ${cumulativeLaps} 圈
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="inline-block px-2.5 py-0.5 rounded-lg font-extrabold text-xs bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                ${student.laps} 圈
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-center text-slate-600 font-extrabold">
+                            ${personalMeters.toLocaleString()} 公尺
+                        </td>
+                        <td class="py-3 px-4 hidden sm:table-cell">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full ${isDone ? 'bg-emerald-500' : 'bg-sky-400'}" style="width: ${progressPct}%"></div>
+                                </div>
+                                <span class="text-xs font-black text-slate-500 w-10 text-right">${progressPct}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            ${titleBadge}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function changeSort(val) {
+            sortBy = val;
+            renderStudents();
+        }
+
+        // ==================== 名單管理功能 ====================
+        function renderModalStudentList() {
+            const list = document.getElementById('modalStudentList');
+            document.getElementById('modalStudentCount').textContent = students.length;
+
+            if (students.length === 0) {
+                list.innerHTML = '<span class="text-xs text-slate-400 p-2">尚無學生資料</span>';
+                return;
+            }
+
+            list.innerHTML = students.map(s => `
+                <span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 shadow-sm">
+                    ${escapeHTML(s.name)}
+                    <button onclick="removeStudent(${s.id})" class="text-slate-400 hover:text-rose-600">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </span>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addSingleStudent() {
+            const input = document.getElementById('singleStudentInput');
+            const name = input.value.trim();
+            if (!name) return;
+
+            students.push({
+                id: nextId++,
+                number: students.length + 1,
+                name: name,
+                laps: 0,
+                lastLapTime: null
+            });
+
+            input.value = '';
+            saveCurrentDateRecords();
+            renderStudents();
+            updateSummary();
+            renderModalStudentList();
+            showToast(`已新增學生：${name}`);
+        }
+
+        function bulkAddStudents(replace = false) {
+            const textarea = document.getElementById('bulkStudentsInput');
+            const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            
+            if (lines.length === 0) {
+                showToast("請先輸入至少一位學生姓名");
+                return;
+            }
+
+            if (replace) {
+                students = [];
+                nextId = 1;
+            }
+
+            lines.forEach(name => {
+                students.push({
+                    id: nextId++,
+                    number: students.length + 1,
+                    name: name,
+                    laps: 0,
+                    lastLapTime: null
+                });
+            });
+
+            textarea.value = '';
+            saveCurrentDateRecords();
+            renderStudents();
+            updateSummary();
+            renderModalStudentList();
+            showToast(`成功匯入 ${lines.length} 位學生`);
+        }
+
+        function removeStudent(id) {
+            students = students.filter(s => s.id !== id);
+            saveCurrentDateRecords();
+            renderStudents();
+            updateSummary();
+            renderModalStudentList();
+        }
+
+        function loadSampleData() {
+            const sampleNames = [
+                "01 王小明", "02 陳小華", "03 林大文", "04 張雅婷", "05 李俊傑",
+                "06 黃怡君", "07 吳冠宇", "08 劉佳穎", "09 蔡宗翰", "10 許詩涵",
+                "11 楊承恩", "12 鄭雅筑", "13 謝宇軒", "14 郭子涵", "15 洪柏翰",
+                "16 曾郁婷", "17 邱俊宏", "18 廖心怡", "19 徐偉哲", "20 周品妍",
+                "21 葉冠廷", "22 蘇家瑜", "23 莊博翔", "24 呂采倪", "25 江宥辰",
+                "26 何思穎", "27 羅翊愷", "28 高語彤", "29 蕭宇翔", "30 潘芷晴",
+                "31 簡柏宇", "32 鍾宜臻"
+            ];
+            document.getElementById('bulkStudentsInput').value = sampleNames.join('\n');
+        }
+
+        // ==================== 排行榜功能 ====================
+        function renderLeaderboard() {
+            const container = document.getElementById('leaderboardList');
+            document.getElementById('lbTargetLaps').textContent = targetLaps;
+
+            const sorted = [...students].sort((a, b) => b.laps - a.laps || a.number - b.number);
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-400 py-8">目前沒有學生資料</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.map((s, idx) => {
+                let rankBadge = `<span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center">${idx + 1}</span>`;
+                if (idx === 0 && s.laps > 0) rankBadge = `<span class="w-7 h-7 rounded-full bg-amber-400 text-amber-950 font-black text-sm flex items-center justify-center shadow-sm">1</span>`;
+                if (idx === 1 && s.laps > 0) rankBadge = `<span class="w-7 h-7 rounded-full bg-slate-300 text-slate-800 font-black text-sm flex items-center justify-center">2</span>`;
+                if (idx === 2 && s.laps > 0) rankBadge = `<span class="w-7 h-7 rounded-full bg-amber-600/80 text-white font-black text-sm flex items-center justify-center">3</span>`;
+
+                const isDone = s.laps >= targetLaps;
+
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-2xl border ${isDone ? 'bg-emerald-50/70 border-emerald-200' : 'bg-white border-slate-100'}">
+                        <div class="flex items-center gap-3">
+                            ${rankBadge}
+                            <div>
+                                <div class="font-bold text-slate-800">${escapeHTML(s.name)}</div>
+                                <div class="text-xs text-slate-400">${s.lastLapTime ? `最後記錄：${s.lastLapTime}` : '尚未開始'}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${isDone ? '<span class="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">達標</span>' : ''}
+                            <span class="text-lg font-black text-slate-800">${s.laps} <span class="text-xs font-normal text-slate-500">圈</span></span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== 匯出與重設功能 ====================
+        function exportCSV() {
+            if (students.length === 0) {
+                showToast("目前沒有資料可匯出");
+                return;
+            }
+
+            saveCurrentDateRecords(false);
+            // 加入 BOM 確保 Excel 開啟中文不亂碼，並包含紀錄日期與跨日總累計
+            let csvContent = "\uFEFF紀錄日期,座號/順序,學生姓名,當日完成圈數,目標圈數,是否達標,最後完成時間,跨日總累計圈數\n";
+            
+            students.forEach(s => {
+                const isDone = s.laps >= targetLaps ? "是" : "否";
+                const timeStr = s.lastLapTime || "-";
+                const totalCum = getStudentCumulativeLaps(s.id);
+                csvContent += `${currentDate},${s.number},"${s.name}",${s.laps},${targetLaps},${isDone},${timeStr},${totalCum}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `跑步計圈成績_${currentDate}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            closeModal('actionsModal');
+            showToast(`已下載 ${currentDate} 的 CSV 成績單`);
+        }
+
+        // ==================== 匯入 CSV 紀錄功能 ====================
+        function triggerImportCSV() {
+            const fileInput = document.getElementById('csvFileInput');
+            fileInput.value = ''; // 清空先前的選擇，確保同一檔案可重複匯入
+            fileInput.click();
+        }
+
+        function handleImportCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    // 處理不同作業系統的換行符號並過濾空行
+                    const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+                    
+                    if (lines.length < 2) {
+                        showToast("CSV 檔案內容為空或格式不正確");
+                        return;
+                    }
+
+                    const headerCols = parseCSVLine(lines[0]);
+                    const hasDateCol = headerCols[0].includes('日期');
+
+                    const importedStudents = [];
+                    let importedTargetLaps = null;
+                    let importedDate = null;
+
+                    // 從第 1 列開始解析（跳過第 0 列標題列）
+                    for (let i = 1; i < lines.length; i++) {
+                        const cols = parseCSVLine(lines[i]);
+                        if (hasDateCol && cols.length >= 4) {
+                            if (!importedDate && cols[0]) importedDate = cols[0].trim();
+                            const num = parseInt(cols[1]) || (importedStudents.length + 1);
+                            const name = cols[2].trim();
+                            const laps = parseInt(cols[3]) || 0;
+                            if (cols.length >= 5 && !importedTargetLaps) {
+                                const parsedTarget = parseInt(cols[4]);
+                                if (!isNaN(parsedTarget) && parsedTarget > 0) importedTargetLaps = parsedTarget;
+                            }
+                            const lastLapTime = (cols.length >= 7 && cols[6] && cols[6] !== '-') ? cols[6].trim() : null;
+                            if (name) {
+                                importedStudents.push({ id: importedStudents.length + 1, number: num, name, laps, lastLapTime });
+                            }
+                        } else if (!hasDateCol && cols.length >= 3) {
+                            const num = parseInt(cols[0]) || (importedStudents.length + 1);
+                            const name = cols[1].trim();
+                            const laps = parseInt(cols[2]) || 0;
+                            if (cols.length >= 4 && !importedTargetLaps) {
+                                const parsedTarget = parseInt(cols[3]);
+                                if (!isNaN(parsedTarget) && parsedTarget > 0) importedTargetLaps = parsedTarget;
+                            }
+                            const lastLapTime = (cols.length >= 6 && cols[5] && cols[5] !== '-') ? cols[5].trim() : null;
+                            if (name) {
+                                importedStudents.push({ id: importedStudents.length + 1, number: num, name, laps, lastLapTime });
+                            }
+                        }
+                    }
+
+                    if (importedStudents.length === 0) {
+                        showToast("找不到有效的學生紀錄資料");
+                        return;
+                    }
+
+                    // 更新系統狀態與對應日期紀錄
+                    students = importedStudents;
+                    nextId = students.length + 1;
+                    lastAction = null;
+                    hideUndoBanner();
+
+                    if (importedDate && /^\d{4}-\d{2}-\d{2}$/.test(importedDate)) {
+                        currentDate = importedDate;
+                        document.getElementById('recordDateInput').value = currentDate;
+                        document.getElementById('bannerDateLabel').textContent = (currentDate === getTodayStr()) ? `今日 (${currentDate})` : currentDate;
+                    }
+                    saveCurrentDateRecords();
+
+                    if (importedTargetLaps) {
+                        targetLaps = importedTargetLaps;
+                        document.getElementById('targetLapsInput').value = targetLaps;
+                    }
+
+                    renderStudents();
+                    updateSummary();
+                    if (currentView === 'stats') renderStatsPage();
+                    closeModal('actionsModal');
+                    showToast(`成功匯入 ${currentDate} 的 ${students.length} 筆跑步紀錄！`);
+                } catch (err) {
+                    console.error("CSV 解析錯誤:", err);
+                    showToast("匯入失敗，請確認檔案格式是否為系統匯出的 CSV");
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // 輔助函式：正確解析包含雙引號的 CSV 單行資料
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function copySummaryText() {
+            if (students.length === 0) {
+                showToast("目前沒有資料可複製");
+                return;
+            }
+
+            const dateStr = new Date().toLocaleDateString('zh-TW');
+            let text = `🏃‍♂️ 跑步計圈紀錄 (${dateStr})\n`;
+            text += `⏱ 總計時：${formatTime(timerSeconds)} | 🎯 目標：${targetLaps} 圈\n`;
+            text += `------------------------\n`;
+
+            students.forEach(s => {
+                const mark = s.laps >= targetLaps ? "✅" : "🏃";
+                text += `${mark} ${s.name}：${s.laps} 圈\n`;
+            });
+
+            // 使用 textarea + execCommand('copy') 確保在 iframe 中也能順利複製
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                closeModal('actionsModal');
+                showToast("已複製文字成績單至剪貼簿！");
+            } catch (err) {
+                showToast("複製失敗，請改用下載 CSV");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showResetConfirm() {
+            document.getElementById('resetConfirmArea').classList.add('hidden');
+            document.getElementById('resetConfirmBox').classList.remove('hidden');
+        }
+
+        function hideResetConfirm() {
+            document.getElementById('resetConfirmBox').classList.add('hidden');
+            document.getElementById('resetConfirmArea').classList.remove('hidden');
+        }
+
+        function resetAllLaps() {
+            students.forEach(s => {
+                s.laps = 0;
+                s.lastLapTime = null;
+            });
+            saveCurrentDateRecords();
+            lastAction = null;
+            hideUndoBanner();
+            resetTimer();
+            renderStudents();
+            updateSummary();
+            if (currentView === 'stats') renderStatsPage();
+            hideResetConfirm();
+            closeModal('actionsModal');
+            showToast(`已將 ${currentDate} 的全班圈數與計時器歸零`);
+        }
+
+        // ==================== Modal 與提示框輔助 ====================
+        function openModal(id) {
+            if (id === 'manageModal') renderModalStudentList();
+            if (id === 'leaderboardModal') renderLeaderboard();
+            if (id === 'actionsModal') hideResetConfirm();
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-800 text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 transition-all duration-300 transform translate-y-2 opacity-0';
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        // 初始化頁面
+        window.onload = function() {
+            const dateInput = document.getElementById('recordDateInput');
+            if (dateInput) {
+                dateInput.value = currentDate;
+                document.getElementById('bannerDateLabel').textContent = `今日 (${currentDate})`;
+            }
+            saveCurrentDateRecords();
+            renderStudents();
+            updateSummary();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
