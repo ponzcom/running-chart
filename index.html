@@ -107,7 +107,7 @@
                         <div class="flex items-center gap-2">
                             <h1 class="text-xl sm:text-2xl font-black text-orange-600 tracking-wide">快樂跑步小達人</h1>
                             <span class="hidden sm:inline-block bg-amber-100 text-amber-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-amber-300">
-                                ⭐ 天天跑一跑
+                                ⭐ 天天運動，天天健康
                             </span>
                         </div>
                     </div>
@@ -166,12 +166,6 @@
                         </button>
                     </div>
 
-                    <!-- ☁️ Firebase 雲端同步設定按鈕 -->
-                    <button id="cloudSyncBtn" onclick="openModal('cloudModal')" class="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-100 text-slate-600 border-2 border-slate-200 hover:bg-slate-200 font-black text-sm shadow-sm transition active:scale-95" title="設定 Firebase 雲端同步">
-                        <span id="cloudStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-                        <span id="cloudBtnText" class="hidden sm:inline">☁️ 雲端同步</span>
-                    </button>
-
                     <!-- 排行榜按鈕 -->
                     <button onclick="openModal('leaderboardModal')" class="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-b from-amber-300 to-amber-400 text-amber-950 border-2 border-amber-500/30 hover:brightness-105 font-black text-sm shadow-sm transition active:scale-95">
                         <span>🏆</span>
@@ -184,9 +178,10 @@
                         <span class="hidden sm:inline">班級名單</span>
                     </button>
 
-                    <!-- 匯出/重設選單按鈕 -->
-                    <button onclick="openModal('actionsModal')" class="p-2.5 rounded-2xl bg-pink-500 text-white hover:bg-pink-600 shadow-sm transition active:scale-95" title="老師百寶箱">
+                    <!-- 匯出/重設/雲端同步選單按鈕 (老師百寶箱) -->
+                    <button id="teacherChestBtn" onclick="openModal('actionsModal')" class="relative p-2.5 rounded-2xl bg-pink-500 text-white hover:bg-pink-600 shadow-sm transition active:scale-95" title="老師百寶箱 (雲端同步/匯出/重設)">
                         <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        <span id="cloudStatusDot" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white"></span>
                     </button>
                 </div>
             </div>
@@ -253,8 +248,8 @@
             <div class="flex items-center gap-3">
                 <span class="text-3xl">📊</span>
                 <div>
-                    <h2 class="text-xl sm:text-2xl font-black text-orange-600">班級與個人跑步累計大本營</h2>
-                    <p class="text-xs sm:text-sm font-bold text-slate-500">記錄全班一起流汗累積的驚人成績！</p>
+                    <h2 class="text-xl sm:text-2xl font-black text-orange-600">班級與個人跑步累排行榜</h2>
+                    <p class="text-xs sm:text-sm font-bold text-slate-500">記錄全班一起累積的驚人成績！</p>
                 </div>
             </div>
             
@@ -451,7 +446,7 @@
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-pink-200">
             <div class="flex justify-between items-center pb-3 border-b-2 border-pink-100">
                 <h2 class="text-xl font-black text-pink-600 flex items-center gap-2">
-                    <span>🎒</span> 老師的成績百寶箱
+                    <span>🎒</span> 老師百寶箱
                 </h2>
                 <button onclick="closeModal('actionsModal')" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -459,6 +454,23 @@
             </div>
 
             <div class="py-5 space-y-3">
+                <!-- ☁️ 雲端同步狀態與管理按鈕 (優化字距與徽章排版) -->
+                <button onclick="closeModal('actionsModal'); openModal('cloudModal');" class="w-full flex items-center justify-between gap-3 p-4 rounded-2xl bg-indigo-50 text-indigo-900 border-2 border-indigo-200 hover:bg-indigo-100 transition">
+                    <div class="flex items-center gap-3.5 text-left min-w-0 flex-1">
+                        <div class="w-11 h-11 shrink-0 flex items-center justify-center bg-indigo-500 text-white rounded-2xl text-xl shadow-sm">
+                            ☁️
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-black text-base tracking-wide">雲端即時同步</span>
+                                <span id="chestCloudBadge" class="shrink-0 text-xs px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 font-extrabold tracking-wide">連線中</span>
+                            </div>
+                            <div id="chestCloudDesc" class="text-xs font-bold text-indigo-600/90 mt-1 truncate">班級代碼：dhes_115_304</div>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 shrink-0 text-indigo-400"></i>
+                </button>
+
                 <button onclick="exportCSV()" class="w-full flex items-center justify-between p-4 rounded-2xl bg-emerald-50 text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-100 transition">
                     <div class="flex items-center gap-3 text-left">
                         <div class="p-2.5 bg-emerald-500 text-white rounded-2xl text-xl">
@@ -554,26 +566,25 @@
                 <!-- 班級同步代碼 -->
                 <div>
                     <label class="block text-sm font-extrabold text-slate-700 mb-1">1. 設定班級同步代碼 (多台平板請輸入相同代碼)</label>
-                    <input type="text" id="cloudClassCodeInput" value="class_301" placeholder="例: class_301 或 grade3_run"
+                    <input type="text" id="cloudClassCodeInput" value="dhes_115_304" placeholder="例: dhes_115_304"
                            class="w-full px-3.5 py-2 border-2 border-indigo-200 rounded-2xl text-sm font-black text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
                 </div>
 
-                <!-- Firebase Config 貼上區 -->
+                <!-- Firebase Config 貼上區 (已預填您的專案設定) -->
                 <div>
                     <div class="flex justify-between items-center mb-1">
-                        <label class="block text-sm font-extrabold text-slate-700">2. 貼上您的 Firebase Config 設定</label>
-                        <span class="text-[11px] font-bold text-indigo-600">支援直接貼整段 JS 物件或 JSON</span>
+                        <label class="block text-sm font-extrabold text-slate-700">2. Firebase Config 設定 (已內建您的專案)</label>
+                        <span class="text-[11px] font-bold text-emerald-600">✅ dhes-115-304</span>
                     </div>
-                    <textarea id="firebaseConfigInput" rows="7" placeholder='直接貼上您從 Firebase 專案設定複製的內容，例如：
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "your-app.firebaseapp.com",
-  projectId: "your-app",
-  storageBucket: "your-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
-};' 
-                              class="w-full p-3 border-2 border-slate-200 rounded-2xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+                    <textarea id="firebaseConfigInput" rows="7" 
+                              class="w-full p-3 border-2 border-slate-200 rounded-2xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400">const firebaseConfig = {
+  apiKey: "AIzaSyCHw4boFDK4pNSaXlgjq4zs0JFLJaQhckY",
+  authDomain: "dhes-115-304.firebaseapp.com",
+  projectId: "dhes-115-304",
+  storageBucket: "dhes-115-304.firebasestorage.app",
+  messagingSenderId: "301550129564",
+  appId: "1:301550129564:web:dba8b0385bb0133e393859"
+};</textarea>
                 </div>
 
                 <!-- 安全性規則小提醒 -->
@@ -610,16 +621,30 @@ const firebaseConfig = {
             getAuth, signInAnonymously, signInWithCustomToken,
             getFirestore, doc, setDoc, onSnapshot
         };
+        // 通知主程式 SDK 已就緒，可自動連線內建的 Firebase 專案
+        if (typeof window.onFirebaseSDKReady === 'function') {
+            window.onFirebaseSDKReady();
+        }
     </script>
 
     <script>
+        // ==================== 內建您的 Firebase 專案設定 ====================
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCHw4boFDK4pNSaXlgjq4zs0JFLJaQhckY",
+            authDomain: "dhes-115-304.firebaseapp.com",
+            projectId: "dhes-115-304",
+            storageBucket: "dhes-115-304.firebasestorage.app",
+            messagingSenderId: "301550129564",
+            appId: "1:301550129564:web:dba8b0385bb0133e393859"
+        };
+
         // ==================== Firebase 雲端即時同步引擎 ====================
         let fbApp = null;
         let fbDb = null;
         let fbAuth = null;
         let fbUnsubscribe = null;
         let isCloudConnected = false;
-        let cloudClassCode = 'class_301';
+        let cloudClassCode = 'dhes_115_304';
         let isApplyingRemoteUpdate = false; // 避免收到雲端更新時重複觸發寫回無窮迴圈
 
         // 智慧解析使用者貼上的 firebaseConfig (支援 JS 物件格式或純 JSON)
@@ -632,47 +657,41 @@ const firebaseConfig = {
             if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
                 throw new Error("找不到大括號 { ... } 設定區塊");
             }
-            let objBody = text.slice(firstBrace, lastBrace + 1);
-            // 嘗試直接 JSON.parse
-            try {
-                return JSON.parse(objBody);
-            } catch (e) {
-                // 若為未加雙引號的 JS 物件屬性名稱，轉換為標準 JSON 格式
-                const jsonified = objBody
-                    .replace(/\/\/.*$/gm, '') // 移除單行註解
-                    .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行註解
-                    .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":') // 屬性名稱加上雙引號
-                    .replace(/'/g, '"') // 單引號轉雙引號
-                    .replace(/,\s*}/g, '}'); // 移除尾隨逗號
-                return JSON.parse(jsonified);
+            const objLiteral = text.slice(firstBrace, lastBrace + 1);
+            // 安全解析 JS 物件字面值或 JSON
+            const fn = new Function(`return (${objLiteral});`);
+            const parsed = fn();
+            if (!parsed || typeof parsed !== 'object') {
+                throw new Error("設定格式無法辨識");
             }
+            return parsed;
         }
 
-        async function connectUserFirebase() {
+        async function connectUserFirebase(silentAutoConnect = false) {
             if (!window.FirebaseSDK) {
-                showToast("Firebase 模組載入中，請稍候 1 秒再試");
+                if (!silentAutoConnect) showToast("Firebase 模組載入中，請稍候 1 秒再試");
                 return;
             }
             const rawConfig = document.getElementById('firebaseConfigInput').value;
             const classCodeInput = document.getElementById('cloudClassCodeInput').value.trim();
             if (!classCodeInput) {
-                showToast("請輸入班級同步代碼！");
+                if (!silentAutoConnect) showToast("請輸入班級同步代碼！");
                 return;
             }
 
             let config;
             try {
-                config = parseFirebaseConfigInput(rawConfig);
+                config = rawConfig && rawConfig.trim() ? parseFirebaseConfigInput(rawConfig) : DEFAULT_FIREBASE_CONFIG;
                 if (!config.projectId || !config.apiKey) {
                     throw new Error("缺少 projectId 或 apiKey");
                 }
             } catch (err) {
-                showToast(`設定格式解析失敗：${err.message}`);
+                if (!silentAutoConnect) showToast(`設定格式解析失敗：${err.message}`);
                 return;
             }
 
             try {
-                showToast("⏳ 正在連線至您的 Firebase 雲端...");
+                if (!silentAutoConnect) showToast("⏳ 正在連線至您的 Firebase 雲端...");
                 const { initializeApp, getApps, deleteApp, getAuth, signInAnonymously, getFirestore, doc, onSnapshot } = window.FirebaseSDK;
 
                 // 若先前已有連線，先清除舊監聽與 App 實例
@@ -697,7 +716,7 @@ const firebaseConfig = {
                 }
 
                 cloudClassCode = classCodeInput.replace(/[^a-zA-Z0-9_-]/g, '_');
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'running-lap-app';
+                const appId = 'dhes-115-304';
                 // 遵循標準路徑結構：/artifacts/{appId}/public/data/classes/{cloudClassCode}
                 const docRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'classes', cloudClassCode);
 
@@ -754,11 +773,15 @@ const firebaseConfig = {
 
                 isCloudConnected = true;
                 updateCloudUIState(true);
-                closeModal('cloudModal');
-                showToast(`✅ 已成功連線至雲端 (班級代碼：${cloudClassCode})！`);
+                if (!silentAutoConnect) {
+                    closeModal('cloudModal');
+                    showToast(`✅ 已成功連線至雲端 (班級代碼：${cloudClassCode})！`);
+                } else {
+                    showToast(`☁️ 已自動連線至雲端 (${cloudClassCode})`);
+                }
             } catch (err) {
                 console.error("Firebase 初始化失敗:", err);
-                showToast(`❌ 連線失敗：${err.message}`);
+                if (!silentAutoConnect) showToast(`❌ 連線失敗：${err.message}`);
             }
         }
 
@@ -767,7 +790,7 @@ const firebaseConfig = {
             if (!isCloudConnected || !fbDb || isApplyingRemoteUpdate) return;
             try {
                 const { doc, setDoc } = window.FirebaseSDK;
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'running-lap-app';
+                const appId = 'dhes-115-304';
                 const docRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'classes', cloudClassCode);
 
                 // 清理學生基本資料（不含單日暫存欄位，確保跨日結構乾淨）
@@ -801,9 +824,9 @@ const firebaseConfig = {
         }
 
         function updateCloudUIState(connected) {
-            const btn = document.getElementById('cloudSyncBtn');
             const dot = document.getElementById('cloudStatusDot');
-            const btnText = document.getElementById('cloudBtnText');
+            const chestBadge = document.getElementById('chestCloudBadge');
+            const chestDesc = document.getElementById('chestCloudDesc');
             const banner = document.getElementById('cloudStatusBanner');
             const badge = document.getElementById('cloudModalBadge');
             const title = document.getElementById('cloudModalStatusTitle');
@@ -811,9 +834,12 @@ const firebaseConfig = {
             const disconnectBtn = document.getElementById('disconnectCloudBtn');
 
             if (connected) {
-                btn.className = "flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-emerald-100 text-emerald-800 border-2 border-emerald-300 hover:bg-emerald-200 font-black text-sm shadow-sm transition active:scale-95";
-                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-                btnText.textContent = `☁️ 已同步 (${cloudClassCode})`;
+                if (dot) dot.className = "absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white animate-pulse";
+                if (chestBadge) {
+                    chestBadge.textContent = "● 已連線";
+                    chestBadge.className = "shrink-0 text-xs px-2.5 py-0.5 rounded-full bg-emerald-500 text-white font-black tracking-wide shadow-sm";
+                }
+                if (chestDesc) chestDesc.textContent = `班級代碼：${cloudClassCode}（點擊切換）`;
                 
                 banner.className = "p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 flex items-center justify-between";
                 badge.textContent = "✅";
@@ -822,9 +848,12 @@ const firebaseConfig = {
                 desc.textContent = "所有平板與大螢幕現在都會即時同步圈數與名單！";
                 disconnectBtn.classList.remove('hidden');
             } else {
-                btn.className = "flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-100 text-slate-600 border-2 border-slate-200 hover:bg-slate-200 font-black text-sm shadow-sm transition active:scale-95";
-                dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
-                btnText.textContent = "☁️ 雲端同步";
+                if (dot) dot.className = "absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white";
+                if (chestBadge) {
+                    chestBadge.textContent = "未連線";
+                    chestBadge.className = "shrink-0 text-xs px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 font-extrabold tracking-wide";
+                }
+                if (chestDesc) chestDesc.textContent = "目前為單機模式，點擊重新連線";
 
                 banner.className = "p-3.5 rounded-2xl bg-slate-100 border-2 border-slate-200 flex items-center justify-between";
                 badge.textContent = "🔌";
@@ -834,6 +863,13 @@ const firebaseConfig = {
                 disconnectBtn.classList.add('hidden');
             }
         }
+
+        // 當模組載入完成或頁面載入完成時自動連線內建 Firebase
+        window.onFirebaseSDKReady = function() {
+            if (!isCloudConnected) {
+                connectUserFirebase(true);
+            }
+        };
 
         // ==================== 可愛動物貼紙陣列 (依座號分配給每位小朋友) ====================
         const cuteAnimals = [
@@ -1850,6 +1886,11 @@ const firebaseConfig = {
             renderStudents();
             updateSummary();
             lucide.createIcons();
+
+            // 自動連線您內建的 Firebase 專案
+            if (window.FirebaseSDK && !isCloudConnected) {
+                connectUserFirebase(true);
+            }
         };
     </script>
 </body>
