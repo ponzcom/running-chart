@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏃‍♂️ 快樂跑步小達人</title>
+    <title>🏃‍♂️ 健康跑跑小隊</title>
     <!-- 引入 Tailwind CSS 進行快速響應式排版 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Tone.js 產生清脆的計圈音效，無需外部音檔 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <!-- 引入 Lucide Icons 圖示庫 -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 引入 SheetJS (xlsx) 讓老師可以直接匯入 Excel (.xlsx / .xls) 與 CSV 檔案 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- 引入圓潤可愛的中文字體 (Zen Maru Gothic 圓體 + Noto Sans TC) -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+TC:wght@500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
     
@@ -105,7 +107,7 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h1 class="text-xl sm:text-2xl font-black text-orange-600 tracking-wide">快樂跑步小達人</h1>
+                            <h1 class="text-xl sm:text-2xl font-black text-orange-600 tracking-wide">健康跑跑小隊</h1>
                             <span class="hidden sm:inline-block bg-amber-100 text-amber-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-amber-300">
                                 ⭐ 天天運動，天天健康
                             </span>
@@ -248,8 +250,8 @@
             <div class="flex items-center gap-3">
                 <span class="text-3xl">📊</span>
                 <div>
-                    <h2 class="text-xl sm:text-2xl font-black text-orange-600">班級與個人跑步累排行榜</h2>
-                    <p class="text-xs sm:text-sm font-bold text-slate-500">記錄全班一起累積的驚人成績！</p>
+                    <h2 class="text-xl sm:text-2xl font-black text-orange-600">班級與個人跑步累計大本營</h2>
+                    <p class="text-xs sm:text-sm font-bold text-slate-500">記錄全班一起流汗累積的驚人成績！</p>
                 </div>
             </div>
             
@@ -446,7 +448,7 @@
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-pink-200">
             <div class="flex justify-between items-center pb-3 border-b-2 border-pink-100">
                 <h2 class="text-xl font-black text-pink-600 flex items-center gap-2">
-                    <span>🎒</span> 老師百寶箱
+                    <span>🎒</span> 老師的成績百寶箱
                 </h2>
                 <button onclick="closeModal('actionsModal')" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -477,27 +479,48 @@
                             📥
                         </div>
                         <div>
-                            <div class="font-black">下載 Excel 成績單 (CSV)</div>
-                            <div class="text-xs font-bold text-emerald-600">保存全班今天的跑步圈數與時間</div>
+                            <div class="font-black">下載單日成績單 (CSV)</div>
+                            <div class="text-xs font-bold text-emerald-600">保存全班目前選定日期的跑步圈數</div>
                         </div>
                     </div>
                     <i data-lucide="chevron-right" class="w-5 h-5"></i>
                 </button>
 
-                <!-- 匯入 CSV 紀錄按鈕 -->
+                <!-- 📅 下載日期區間多日成績單區塊 -->
+                <div class="p-4 rounded-2xl bg-amber-50/90 text-amber-950 border-2 border-amber-300 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-amber-500 text-white rounded-2xl text-xl shrink-0">
+                            📆
+                        </div>
+                        <div>
+                            <div class="font-black text-amber-900">下載日期區間成績單 (CSV)</div>
+                            <div class="text-xs font-bold text-amber-700">自訂起訖日期，一次匯出每日明細與區間總累計</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="exportStartDate" class="flex-1 min-w-0 bg-white border-2 border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-black text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <span class="font-black text-amber-700 text-xs">至</span>
+                        <input type="date" id="exportEndDate" class="flex-1 min-w-0 bg-white border-2 border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-black text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    </div>
+                    <button onclick="exportDateRangeCSV()" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-105 text-white font-black rounded-xl text-sm shadow-sm transition active:scale-95 flex items-center justify-center gap-1.5">
+                        <span>⬇️</span> 匯出區間成績總表
+                    </button>
+                </div>
+
+                <!-- 匯入 CSV / Excel 多日期紀錄按鈕 -->
                 <button onclick="triggerImportCSV()" class="w-full flex items-center justify-between p-4 rounded-2xl bg-indigo-50 text-indigo-800 border-2 border-indigo-200 hover:bg-indigo-100 transition">
                     <div class="flex items-center gap-3 text-left">
                         <div class="p-2.5 bg-indigo-500 text-white rounded-2xl text-xl">
                             📂
                         </div>
                         <div>
-                            <div class="font-black">匯入之前的成績紀錄</div>
-                            <div class="text-xs font-bold text-indigo-600">讀取上次下載的 CSV，繼續累積圈數</div>
+                            <div class="font-black">匯入 Excel / CSV 多日期成績表</div>
+                            <div class="text-xs font-bold text-indigo-600">支援 .xlsx / .csv（座號｜姓名｜各日期圈數），一次匯入並同步雲端</div>
                         </div>
                     </div>
                     <i data-lucide="chevron-right" class="w-5 h-5"></i>
                 </button>
-                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleImportCSV(event)">
+                <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleImportCSV(event)">
 
                 <button onclick="copySummaryText()" class="w-full flex items-center justify-between p-4 rounded-2xl bg-sky-50 text-sky-800 border-2 border-sky-200 hover:bg-sky-100 transition">
                     <div class="flex items-center gap-3 text-left">
@@ -716,13 +739,14 @@
                 }
 
                 cloudClassCode = classCodeInput.replace(/[^a-zA-Z0-9_-]/g, '_');
-                const appId = 'dhes-115-304';
-                // 遵循標準路徑結構：/artifacts/{appId}/public/data/classes/{cloudClassCode}
-                const docRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'classes', cloudClassCode);
+                // 使用您指定的集合路徑：running-chart/{cloudClassCode}
+                const docRef = doc(fbDb, 'running-chart', cloudClassCode);
+                const prevDocRef = doc(fbDb, 'classes', cloudClassCode);
+                const legacyDocRef = doc(fbDb, 'artifacts', 'dhes-115-304', 'public', 'data', 'classes', cloudClassCode);
 
                 let isFirstSnapshot = true;
 
-                fbUnsubscribe = onSnapshot(docRef, (snapshot) => {
+                fbUnsubscribe = onSnapshot(docRef, async (snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.data();
                         isApplyingRemoteUpdate = true;
@@ -761,7 +785,28 @@
                         if (currentView === 'stats') renderStatsPage();
                         isApplyingRemoteUpdate = false;
                     } else if (isFirstSnapshot) {
-                        // 雲端尚無此班級資料，將目前本機資料上傳初始化
+                        // 若新路徑尚無資料，自動檢查先前的 classes 或舊深層路徑是否有資料並無縫搬移過來
+                        try {
+                            const { getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                            const { setDoc } = window.FirebaseSDK;
+                            const prevSnap = await getDoc(prevDocRef);
+                            if (prevSnap.exists()) {
+                                await setDoc(docRef, prevSnap.data());
+                                showToast("📦 已自動將資料搬移至 running-chart！");
+                                isFirstSnapshot = false;
+                                return;
+                            }
+                            const legacySnap = await getDoc(legacyDocRef);
+                            if (legacySnap.exists()) {
+                                await setDoc(docRef, legacySnap.data());
+                                showToast("📦 已自動將舊路徑資料搬移至 running-chart！");
+                                isFirstSnapshot = false;
+                                return;
+                            }
+                        } catch (e) {
+                            console.warn("檢查舊路徑略過:", e);
+                        }
+                        // 皆無資料則將目前本機資料上傳初始化
                         pushStateToCloud();
                     }
                     isFirstSnapshot = false;
@@ -775,7 +820,7 @@
                 updateCloudUIState(true);
                 if (!silentAutoConnect) {
                     closeModal('cloudModal');
-                    showToast(`✅ 已成功連線至雲端 (班級代碼：${cloudClassCode})！`);
+                    showToast(`✅ 已成功連線至雲端 (running-chart/${cloudClassCode})！`);
                 } else {
                     showToast(`☁️ 已自動連線至雲端 (${cloudClassCode})`);
                 }
@@ -790,8 +835,7 @@
             if (!isCloudConnected || !fbDb || isApplyingRemoteUpdate) return;
             try {
                 const { doc, setDoc } = window.FirebaseSDK;
-                const appId = 'dhes-115-304';
-                const docRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'classes', cloudClassCode);
+                const docRef = doc(fbDb, 'running-chart', cloudClassCode);
 
                 // 清理學生基本資料（不含單日暫存欄位，確保跨日結構乾淨）
                 const cleanStudents = students.map(s => ({
@@ -896,43 +940,26 @@
         }
 
         let currentDate = getTodayStr();
-        // 儲存各日期的紀錄：{ "2026-11-23": { studentId: { laps: 3, lastLapTime: "04:12" } } }
+        // 儲存各日期的紀錄 { "YYYY-MM-DD": { studentId: { laps, lastLapTime } } }
         let dailyRecords = {};
 
-        let students = [
-            { id: 1, number: 1, name: "01 王小明", laps: 0, lastLapTime: null },
-            { id: 2, number: 2, name: "02 陳小華", laps: 0, lastLapTime: null },
-            { id: 3, number: 3, name: "03 林大文", laps: 0, lastLapTime: null },
-            { id: 4, number: 4, name: "04 張雅婷", laps: 0, lastLapTime: null },
-            { id: 5, number: 5, name: "05 李俊傑", laps: 0, lastLapTime: null },
-            { id: 6, number: 6, name: "06 黃怡君", laps: 0, lastLapTime: null },
-            { id: 7, number: 7, name: "07 吳冠宇", laps: 0, lastLapTime: null },
-            { id: 8, number: 8, name: "08 劉佳穎", laps: 0, lastLapTime: null },
-            { id: 9, number: 9, name: "09 蔡宗翰", laps: 0, lastLapTime: null },
-            { id: 10, number: 10, name: "10 許詩涵", laps: 0, lastLapTime: null },
-            { id: 11, number: 11, name: "11 楊承恩", laps: 0, lastLapTime: null },
-            { id: 12, number: 12, name: "12 鄭雅筑", laps: 0, lastLapTime: null },
-            { id: 13, number: 13, name: "13 謝宇軒", laps: 0, lastLapTime: null },
-            { id: 14, number: 14, name: "14 郭子涵", laps: 0, lastLapTime: null },
-            { id: 15, number: 15, name: "15 洪柏翰", laps: 0, lastLapTime: null },
-            { id: 16, number: 16, name: "16 曾郁婷", laps: 0, lastLapTime: null },
-            { id: 17, number: 17, name: "17 邱俊宏", laps: 0, lastLapTime: null },
-            { id: 18, number: 18, name: "18 廖心怡", laps: 0, lastLapTime: null },
-            { id: 19, number: 19, name: "19 徐偉哲", laps: 0, lastLapTime: null },
-            { id: 20, number: 20, name: "20 周品妍", laps: 0, lastLapTime: null },
-            { id: 21, number: 21, name: "21 葉冠廷", laps: 0, lastLapTime: null },
-            { id: 22, number: 22, name: "22 蘇家瑜", laps: 0, lastLapTime: null },
-            { id: 23, number: 23, name: "23 莊博翔", laps: 0, lastLapTime: null },
-            { id: 24, number: 24, name: "24 呂采倪", laps: 0, lastLapTime: null },
-            { id: 25, number: 25, name: "25 江宥辰", laps: 0, lastLapTime: null },
-            { id: 26, number: 26, name: "26 何思穎", laps: 0, lastLapTime: null },
-            { id: 27, number: 27, name: "27 羅翊愷", laps: 0, lastLapTime: null },
-            { id: 28, number: 28, name: "28 高語彤", laps: 0, lastLapTime: null },
-            { id: 29, number: 29, name: "29 蕭宇翔", laps: 0, lastLapTime: null },
-            { id: 30, number: 30, name: "30 潘芷晴", laps: 0, lastLapTime: null },
-            { id: 31, number: 31, name: "31 簡柏宇", laps: 0, lastLapTime: null },
-            { id: 32, number: 32, name: "32 鍾宜臻", laps: 0, lastLapTime: null }
-        ];
+        // 預設 32 人班級名單（老師可隨時透過名單管理或匯入 Excel 更新）
+        let students = Array.from({ length: 32 }, (_, idx) => {
+            const num = idx + 1;
+            const sampleNames = [
+                "王小明", "陳小華", "林大文", "張雅婷", "李俊傑", "黃怡君", "吳冠宇", "劉佳穎",
+                "蔡宗翰", "許詩涵", "楊承恩", "鄭雅筑", "謝宇軒", "郭子涵", "洪柏翰", "曾郁婷",
+                "邱俊宏", "廖心怡", "徐偉哲", "周品妍", "葉冠廷", "蘇家瑜", "莊博翔", "呂采倪",
+                "江宥辰", "何思穎", "羅翊愷", "高語彤", "蕭宇翔", "潘芷晴", "簡柏宇", "鍾宜臻"
+            ];
+            return {
+                id: num,
+                number: num,
+                name: `${String(num).padStart(2, '0')} ${sampleNames[idx]}`,
+                laps: 0,
+                lastLapTime: null
+            };
+        });
 
         let targetLaps = 5;
         let lapMeters = 200; // 預設操場一圈 200 公尺
@@ -943,15 +970,15 @@
         let undoTimeout = null;
         let nextId = 33;
 
-        // 同步目前畫面的 students 圈數到 dailyRecords[currentDate]
+        // 將目前畫面上所有學生的圈數寫入目前選定日期的紀錄庫，並自動同步至雲端
         function saveCurrentDateRecords(syncToCloud = true) {
             if (!dailyRecords[currentDate]) {
                 dailyRecords[currentDate] = {};
             }
             students.forEach(s => {
                 dailyRecords[currentDate][s.id] = {
-                    laps: s.laps,
-                    lastLapTime: s.lastLapTime
+                    laps: s.laps || 0,
+                    lastLapTime: s.lastLapTime || null
                 };
             });
             if (syncToCloud && isCloudConnected && !isApplyingRemoteUpdate) {
@@ -959,15 +986,14 @@
             }
         }
 
-        // 切換日期並載入該日紀錄（可直接點擊卡片修改）
+        // 切換日期並載入該日期的全班紀錄
         function changeRecordDate(newDate) {
             if (!newDate) return;
-            // 先保存原本日期的資料（不重複推送雲端）
+            // 切換前先保存目前畫面的紀錄（不重複觸發雲端寫入）
             saveCurrentDateRecords(false);
-
             currentDate = newDate;
-            const dateData = dailyRecords[currentDate] || {};
 
+            const dateData = dailyRecords[currentDate] || {};
             students.forEach(s => {
                 if (dateData[s.id]) {
                     s.laps = dateData[s.id].laps || 0;
@@ -1661,61 +1687,233 @@
             showToast(`已下載 ${currentDate} 的 CSV 成績單`);
         }
 
-        // ==================== 匯入 CSV 紀錄功能 ====================
+        // ==================== 下載日期區間多日成績單 (CSV) ====================
+        function exportDateRangeCSV() {
+            if (students.length === 0) {
+                showToast("目前沒有學生資料可匯出");
+                return;
+            }
+
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
+
+            if (!startDate || !endDate) {
+                showToast("請選擇完整的開始與結束日期！");
+                return;
+            }
+            if (startDate > endDate) {
+                showToast("開始日期不能晚於結束日期喔！");
+                return;
+            }
+
+            saveCurrentDateRecords(false);
+
+            // 找出在日期區間內有紀錄的日期（若該區間內無任何歷史紀錄，至少包含區間內的現有日期或起訖日）
+            const allDates = Object.keys(dailyRecords).sort();
+            let datesInRange = allDates.filter(d => d >= startDate && d <= endDate);
+
+            // 若區間內完全沒有紀錄，則列出起訖日期（若起訖相同則列出一日）
+            if (datesInRange.length === 0) {
+                datesInRange = (startDate === endDate) ? [startDate] : [startDate, endDate];
+            }
+
+            // 建立橫向多日期報表標題（與本系統的「多日期匯入格式」完全相容！）
+            // 欄位：座號, 姓名, [日期1], [日期2]..., 區間總累計圈數, 區間總距離(公尺)
+            const headerCols = ["座號", "姓名", ...datesInRange, "區間總累計圈數", "區間總距離(公尺)"];
+            let csvContent = "\uFEFF" + headerCols.join(",") + "\n";
+
+            const sortedStudents = [...students].sort((a, b) => a.number - b.number);
+            sortedStudents.forEach(s => {
+                // 去除姓名前方重複的座號前綴以便與「座號」欄分開，若無前綴則保留原名
+                const cleanName = s.name.replace(/^\d+\s+/, '');
+                let rangeSum = 0;
+                const dailyCols = datesInRange.map(d => {
+                    const laps = (dailyRecords[d] && dailyRecords[d][s.id]) ? (dailyRecords[d][s.id].laps || 0) : 0;
+                    rangeSum += laps;
+                    return laps;
+                });
+                const totalDist = rangeSum * lapMeters;
+                const rowCols = [s.number, `"${cleanName}"`, ...dailyCols, rangeSum, totalDist];
+                csvContent += rowCols.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `跑步區間成績單_${startDate}_至_${endDate}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            closeModal('actionsModal');
+            showToast(`✅ 已下載 ${startDate} 至 ${endDate} 的區間成績單！`);
+        }
+
+        // ==================== 匯入 Excel / CSV 多日期紀錄功能 ====================
         function triggerImportCSV() {
             const fileInput = document.getElementById('csvFileInput');
             fileInput.value = ''; // 清空先前的選擇，確保同一檔案可重複匯入
             fileInput.click();
         }
 
+        // 智慧解析各種日期標題格式 (如 2026-11-19、2026/11/19、11/19、11月19日)
+        function normalizeDateHeader(headerStr) {
+            if (headerStr === null || headerStr === undefined) return null;
+            const s = String(headerStr).trim();
+            const fullMatch = s.match(/^(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})日?$/);
+            if (fullMatch) {
+                return `${fullMatch[1]}-${fullMatch[2].padStart(2, '0')}-${fullMatch[3].padStart(2, '0')}`;
+            }
+            const shortMatch = s.match(/^(\d{1,2})[-/月](\d{1,2})日?$/);
+            if (shortMatch) {
+                const year = new Date().getFullYear();
+                return `${year}-${shortMatch[1].padStart(2, '0')}-${shortMatch[2].padStart(2, '0')}`;
+            }
+            return null;
+        }
+
         function handleImportCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
 
+            const isExcel = /\.(xlsx|xls)$/i.test(file.name);
             const reader = new FileReader();
+
             reader.onload = function(e) {
                 try {
-                    const content = e.target.result;
-                    // 處理不同作業系統的換行符號並過濾空行
-                    const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
-                    
-                    if (lines.length < 2) {
-                        showToast("CSV 檔案內容為空或格式不正確");
+                    let rows = [];
+                    if (isExcel && typeof XLSX !== 'undefined') {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
+                    } else {
+                        const content = e.target.result;
+                        const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+                        rows = lines.map(line => parseCSVLine(line));
+                    }
+
+                    rows = rows.filter(r => r.some(cell => String(cell).trim() !== ''));
+                    if (rows.length < 2) {
+                        showToast("檔案內容為空或至少需要標題列與一筆學生資料");
                         return;
                     }
 
-                    const headerCols = parseCSVLine(lines[0]);
-                    const hasDateCol = headerCols[0].includes('日期');
+                    const headers = rows[0].map(h => String(h).trim());
+                    
+                    // 偵測標題列中是否包含多個日期欄位 (多日期寬表模式)
+                    const dateColumns = [];
+                    headers.forEach((h, idx) => {
+                        const normDate = normalizeDateHeader(h);
+                        if (normDate) {
+                            dateColumns.push({ colIndex: idx, dateStr: normDate });
+                        }
+                    });
 
+                    let numCol = headers.findIndex(h => h.includes('座號') || h.includes('編號') || h === '號');
+                    let nameCol = headers.findIndex(h => h.includes('姓名') || h.includes('名字') || h.includes('學生'));
+                    if (nameCol === -1) {
+                        nameCol = (numCol === 0) ? 1 : 0;
+                    }
+
+                    if (dateColumns.length > 0) {
+                        // ===== 模式 A：多日期橫向成績表 (座號 | 姓名 | 2026-11-19 | 2026-11-20 ...) =====
+                        const newStudents = [];
+                        const newDailyRecords = { ...dailyRecords };
+                        dateColumns.forEach(dc => {
+                            if (!newDailyRecords[dc.dateStr]) newDailyRecords[dc.dateStr] = {};
+                        });
+
+                        for (let i = 1; i < rows.length; i++) {
+                            const row = rows[i];
+                            const rawName = String(row[nameCol] || '').trim();
+                            if (!rawName || rawName.includes('總計') || rawName.includes('平均')) continue;
+
+                            const parsedNum = (numCol !== -1) ? parseInt(row[numCol]) : NaN;
+                            const num = !isNaN(parsedNum) ? parsedNum : (newStudents.length + 1);
+                            const displayName = (numCol !== -1 && !rawName.startsWith(String(num)) && !rawName.startsWith(String(num).padStart(2, '0')))
+                                ? `${String(num).padStart(2, '0')} ${rawName}`
+                                : rawName;
+
+                            const studentId = newStudents.length + 1;
+                            newStudents.push({
+                                id: studentId,
+                                number: num,
+                                name: displayName,
+                                laps: 0,
+                                lastLapTime: null
+                            });
+
+                            dateColumns.forEach(dc => {
+                                const lapsVal = parseInt(row[dc.colIndex]);
+                                newDailyRecords[dc.dateStr][studentId] = {
+                                    laps: !isNaN(lapsVal) && lapsVal >= 0 ? lapsVal : 0,
+                                    lastLapTime: null
+                                };
+                            });
+                        }
+
+                        if (newStudents.length === 0) {
+                            showToast("找不到有效的學生姓名資料");
+                            return;
+                        }
+
+                        students = newStudents;
+                        nextId = students.length + 1;
+                        dailyRecords = newDailyRecords;
+
+                        const latestImportedDate = dateColumns[dateColumns.length - 1].dateStr;
+                        currentDate = latestImportedDate;
+                        document.getElementById('recordDateInput').value = currentDate;
+                        document.getElementById('bannerDateLabel').textContent = (currentDate === getTodayStr()) ? `今日 (${currentDate})` : currentDate;
+
+                        const dateData = dailyRecords[currentDate] || {};
+                        students.forEach(s => {
+                            s.laps = dateData[s.id]?.laps || 0;
+                            s.lastLapTime = null;
+                        });
+
+                        saveCurrentDateRecords(true);
+                        renderStudents();
+                        updateSummary();
+                        if (currentView === 'stats') renderStatsPage();
+                        closeModal('actionsModal');
+                        showToast(`🎉 成功匯入 ${students.length} 位同學共 ${dateColumns.length} 個日期的紀錄，並已同步至雲端！`);
+                        return;
+                    }
+
+                    // ===== 模式 B：單日系統匯出 CSV 格式 =====
+                    const hasDateCol = headers[0].includes('日期');
                     const importedStudents = [];
                     let importedTargetLaps = null;
                     let importedDate = null;
 
-                    // 從第 1 列開始解析（跳過第 0 列標題列）
-                    for (let i = 1; i < lines.length; i++) {
-                        const cols = parseCSVLine(lines[i]);
+                    for (let i = 1; i < rows.length; i++) {
+                        const cols = rows[i].map(c => String(c).trim());
                         if (hasDateCol && cols.length >= 4) {
-                            if (!importedDate && cols[0]) importedDate = cols[0].trim();
+                            if (!importedDate && cols[0]) importedDate = normalizeDateHeader(cols[0]) || cols[0];
                             const num = parseInt(cols[1]) || (importedStudents.length + 1);
-                            const name = cols[2].trim();
+                            const name = cols[2];
                             const laps = parseInt(cols[3]) || 0;
                             if (cols.length >= 5 && !importedTargetLaps) {
                                 const parsedTarget = parseInt(cols[4]);
                                 if (!isNaN(parsedTarget) && parsedTarget > 0) importedTargetLaps = parsedTarget;
                             }
-                            const lastLapTime = (cols.length >= 7 && cols[6] && cols[6] !== '-') ? cols[6].trim() : null;
+                            const lastLapTime = (cols.length >= 7 && cols[6] && cols[6] !== '-') ? cols[6] : null;
                             if (name) {
                                 importedStudents.push({ id: importedStudents.length + 1, number: num, name, laps, lastLapTime });
                             }
                         } else if (!hasDateCol && cols.length >= 3) {
                             const num = parseInt(cols[0]) || (importedStudents.length + 1);
-                            const name = cols[1].trim();
+                            const name = cols[1];
                             const laps = parseInt(cols[2]) || 0;
                             if (cols.length >= 4 && !importedTargetLaps) {
                                 const parsedTarget = parseInt(cols[3]);
                                 if (!isNaN(parsedTarget) && parsedTarget > 0) importedTargetLaps = parsedTarget;
                             }
-                            const lastLapTime = (cols.length >= 6 && cols[5] && cols[5] !== '-') ? cols[5].trim() : null;
+                            const lastLapTime = (cols.length >= 6 && cols[5] && cols[5] !== '-') ? cols[5] : null;
                             if (name) {
                                 importedStudents.push({ id: importedStudents.length + 1, number: num, name, laps, lastLapTime });
                             }
@@ -1723,11 +1921,10 @@
                     }
 
                     if (importedStudents.length === 0) {
-                        showToast("找不到有效的學生紀錄資料");
+                        showToast("找不到有效的學生紀錄資料，請確認標題列包含「姓名」與「日期 (如 2026-11-19)」");
                         return;
                     }
 
-                    // 更新系統狀態與對應日期紀錄
                     students = importedStudents;
                     nextId = students.length + 1;
                     lastAction = null;
@@ -1738,7 +1935,7 @@
                         document.getElementById('recordDateInput').value = currentDate;
                         document.getElementById('bannerDateLabel').textContent = (currentDate === getTodayStr()) ? `今日 (${currentDate})` : currentDate;
                     }
-                    saveCurrentDateRecords();
+                    saveCurrentDateRecords(true);
 
                     if (importedTargetLaps) {
                         targetLaps = importedTargetLaps;
@@ -1749,13 +1946,18 @@
                     updateSummary();
                     if (currentView === 'stats') renderStatsPage();
                     closeModal('actionsModal');
-                    showToast(`成功匯入 ${currentDate} 的 ${students.length} 筆跑步紀錄！`);
+                    showToast(`✅ 成功匯入 ${currentDate} 的 ${students.length} 筆跑步紀錄並同步至雲端！`);
                 } catch (err) {
-                    console.error("CSV 解析錯誤:", err);
-                    showToast("匯入失敗，請確認檔案格式是否為系統匯出的 CSV");
+                    console.error("檔案解析錯誤:", err);
+                    showToast("匯入失敗，請確認檔案為正常的 Excel (.xlsx) 或 CSV 格式");
                 }
             };
-            reader.readAsText(file, 'UTF-8');
+
+            if (isExcel) {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file, 'UTF-8');
+            }
         }
 
         // 輔助函式：正確解析包含雙引號的 CSV 單行資料
@@ -1840,7 +2042,16 @@
         function openModal(id) {
             if (id === 'manageModal') renderModalStudentList();
             if (id === 'leaderboardModal') renderLeaderboard();
-            if (id === 'actionsModal') hideResetConfirm();
+            if (id === 'actionsModal') {
+                hideResetConfirm();
+                // 自動帶入預設的起訖日期（最早有紀錄日 ~ 目前選定日）
+                const recordedDates = Object.keys(dailyRecords).sort();
+                const earliestDate = recordedDates.length > 0 ? recordedDates[0] : currentDate;
+                const startInput = document.getElementById('exportStartDate');
+                const endInput = document.getElementById('exportEndDate');
+                if (startInput && !startInput.value) startInput.value = earliestDate;
+                if (endInput && !endInput.value) endInput.value = currentDate;
+            }
             document.getElementById(id).classList.remove('hidden');
         }
 
